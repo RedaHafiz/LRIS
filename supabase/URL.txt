@@ -1,0 +1,63 @@
+https://hfvxlvexfsinomyidrwv.supabase.co
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhmdnhsdmV4ZnNpbm9teWlkcnd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4MjkxMzQsImV4cCI6MjA4MTQwNTEzNH0.9sXvCvHMtb1D5hTzg3GMpPu2mLshBnT6pZbTJQrQKhc
+
+
+| column_name             | data_type |
+| ----------------------- | --------- |
+| id                      | uuid      |
+| LR_Threat_Asses_ID      | text      |
+| Crop                    | text      |
+| LR_Name                 | text      |
+| LR_Threat_Assessor      | text      |
+| Assess_Date             | text      |
+| LR_Threat_Reviewer      | text      |
+| Review_Date             | text      |
+| Subcriteria_Scores_A1.1 | text      |
+| Subcriteria_Scores_A1.2 | text      |
+| Subcriteria_Scores_A1.3 | text      |
+| Subcriteria_Scores_A2.1 | text      |
+| Subcriteria_Scores_A2.2 | text      |
+| Subcriteria_Scores_A2.3 | text      |
+| Subcriteria_Scores_A2.4 | text      |
+| Subcriteria_Scores_A3.1 | text      |
+| Subcriteria_Scores_A3.2 | text      |
+| Subcriteria_Scores_B1.1 | text      |
+| Subcriteria_Scores_B1.2 | text      |
+| Subcriteria_Scores_B1.3 | text      |
+| Subcriteria_Scores_B1.4 | text      |
+| Subcriteria_Scores_C1.1 | text      |
+| Subcriteria_Scores_C1.2 | text      |
+| Subcriteria_Scores_C1.3 | text      |
+| Subcriteria_Scores_C2.1 | text      |
+| Subcriteria_Scores_D1.1 | text      |
+| Subcriteria_Scores_D1.2 | text      |
+| Subcriteria_Scores_D1.3 | text      |
+| Subcriteria_Scores_D2.1 | text      |
+| Subcriteria_Scores_D2.2 | text      |
+| Subcriteria_Scores_D3.1 | text      |
+| Subcriteria_Scores_D3.2 | text      |
+| Threat_Scores           | text      |
+| Threat_Max_Score        | text      |
+| Threat_Risk_%           | text      |
+| Threat_Category         | text      |
+
+
+
+
+
+| column_name          | data_type |
+| -------------------- | --------- |
+| id                   | uuid      |
+| crop_group           | text      |
+| primary_crop_type    | text      |
+| primary_crop_subtype | text      |
+| english_common_name  | text      |
+| family               | text      |
+| genus                | text      |
+| species              | text      |
+| authority            | text      |
+| notes                | text      |
+| source_1             | text      |
+| source_2             | text      |
+| source_3             | text      |

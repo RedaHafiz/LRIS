@@ -1,0 +1,290 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+
+interface LandraceAssessmentsViewProps {
+  initialAssessments: any[]
+}
+
+export default function LandraceAssessmentsView({
+  initialAssessments,
+}: LandraceAssessmentsViewProps) {
+  const [assessments] = useState(initialAssessments)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [cropFilter, setCropFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+
+  // Filter assessments
+  const filteredAssessments = useMemo(() => {
+    return assessments.filter((assessment) => {
+      const matchesSearch =
+        searchQuery === '' ||
+        assessment.LR_Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        assessment.Crop?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        assessment.LR_Threat_Assessor?.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesCrop =
+        cropFilter === 'all' || assessment.Crop === cropFilter
+
+      const matchesCategory =
+        categoryFilter === 'all' || assessment.Threat_Category === categoryFilter
+
+      return matchesSearch && matchesCrop && matchesCategory
+    })
+  }, [assessments, searchQuery, cropFilter, categoryFilter])
+
+  // Get unique values for filters
+  const uniqueCrops = useMemo(() => {
+    return [...new Set(assessments.map((a) => a.Crop).filter(Boolean))]
+  }, [assessments])
+
+  const uniqueCategories = useMemo(() => {
+    return [...new Set(assessments.map((a) => a.Threat_Category).filter(Boolean))]
+  }, [assessments])
+
+  const getCategoryColor = (category: string) => {
+    if (!category) return 'bg-gray-100 text-gray-800'
+    const lower = category.toLowerCase()
+    if (lower.includes('high') || lower.includes('critical')) return 'bg-red-100 text-red-800'
+    if (lower.includes('medium') || lower.includes('moderate')) return 'bg-yellow-100 text-yellow-800'
+    if (lower.includes('low')) return 'bg-green-100 text-green-800'
+    return 'bg-blue-100 text-blue-800'
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Search and Filters */}
+      <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SEARCH
+            </label>
+            <input
+              type="text"
+              placeholder="Search by landrace name, crop, assessor..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              CROP TYPE
+            </label>
+            <select
+              value={cropFilter}
+              onChange={(e) => setCropFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            >
+              <option value="all">All</option>
+              {uniqueCrops.map((crop) => (
+                <option key={crop} value={crop}>
+                  {crop}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              THREAT CATEGORY
+            </label>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            >
+              <option value="all">All</option>
+              {uniqueCategories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Assessments Table */}
+      <div className="bg-white rounded-lg shadow border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Landrace Threat Assessments ({filteredAssessments.length})
+          </h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10">
+                  Assessment ID
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-32 bg-gray-50 z-10">
+                  Landrace Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Crop
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Assessor
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Assess Date
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Reviewer
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Review Date
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-red-50" colSpan={3}>
+                  Criterion A
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50" colSpan={4}>
+                  Criterion B
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50" colSpan={3}>
+                  Criterion C
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50" colSpan={5}>
+                  Criterion D
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Threat Scores
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Max Score
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Risk %
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+              </tr>
+              <tr>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase sticky left-0 bg-gray-50 z-10"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase sticky left-32 bg-gray-50 z-10"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A1.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A1.2</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A1.3</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-blue-50">B1.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-blue-50">B1.2</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-blue-50">B1.3</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-blue-50">B1.4</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-green-50">C1.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-green-50">C1.2</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-green-50">C1.3</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D1.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D1.2</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D1.3</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D2.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D2.2</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredAssessments.map((assessment) => (
+                <tr key={assessment.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-sm text-gray-600 font-mono text-xs sticky left-0 bg-white">
+                    {assessment.LR_Threat_Asses_ID || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-900 font-medium sticky left-32 bg-white">
+                    {assessment.LR_Name || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {assessment.Crop || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {assessment.LR_Threat_Assessor || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {assessment.Assess_Date || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {assessment.LR_Threat_Reviewer || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    {assessment.Review_Date || '-'}
+                  </td>
+                  {/* Criterion A scores */}
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A1.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A1.2'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A1.3'] || '-'}
+                  </td>
+                  {/* Criterion B scores */}
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-blue-50">
+                    {assessment['Subcriteria_Scores_B1.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-blue-50">
+                    {assessment['Subcriteria_Scores_B1.2'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-blue-50">
+                    {assessment['Subcriteria_Scores_B1.3'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-blue-50">
+                    {assessment['Subcriteria_Scores_B1.4'] || '-'}
+                  </td>
+                  {/* Criterion C scores */}
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-green-50">
+                    {assessment['Subcriteria_Scores_C1.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-green-50">
+                    {assessment['Subcriteria_Scores_C1.2'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-green-50">
+                    {assessment['Subcriteria_Scores_C1.3'] || '-'}
+                  </td>
+                  {/* Criterion D scores */}
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
+                    {assessment['Subcriteria_Scores_D1.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
+                    {assessment['Subcriteria_Scores_D1.2'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
+                    {assessment['Subcriteria_Scores_D1.3'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
+                    {assessment['Subcriteria_Scores_D2.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
+                    {assessment['Subcriteria_Scores_D2.2'] || '-'}
+                  </td>
+                  {/* Summary scores */}
+                  <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                    {assessment.Threat_Scores || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700">
+                    {assessment.Threat_Max_Score || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                    {assessment['Threat_Risk_%'] || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(assessment.Threat_Category)}`}>
+                      {assessment.Threat_Category || 'N/A'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
