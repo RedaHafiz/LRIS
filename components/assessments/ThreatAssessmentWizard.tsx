@@ -335,7 +335,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                   <option value="">Select Taxonomic Classification</option>
                   {filteredTaxa.map((taxon) => (
                     <option key={taxon.id} value={taxon.id}>
-                      {taxon.genus} {taxon.species} {taxon.authority ? `(${taxon.authority})` : ''}
+                      {taxon.genus} {taxon.species}
                     </option>
                   ))}
                 </select>
