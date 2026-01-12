@@ -35,26 +35,14 @@ export default function NewAssessmentForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   
-  // Filter states for taxa dropdown
-  const [selectedKingdom, setSelectedKingdom] = useState('')
-  const [selectedPhylum, setSelectedPhylum] = useState('')
-
-  // Get unique kingdoms
-  const kingdoms = useMemo(() => {
-    return [...new Set(taxa.map((t) => t.kingdom))].sort()
+  // Filtered taxa list
+  const sortedTaxa = useMemo(() => {
+    return taxa.sort((a, b) => {
+      const nameA = a.english_common_name || a.genus || ''
+      const nameB = b.english_common_name || b.genus || ''
+      return nameA.localeCompare(nameB)
+    })
   }, [taxa])
-
-  // Get phyla for selected kingdom
-  const phyla = useMemo(() => {
-    if (!selectedKingdom) return []
-    return [...new Set(taxa.filter((t) => t.kingdom === selectedKingdom).map((t) => t.phylum))].sort()
-  }, [taxa, selectedKingdom])
-
-  // Get classes for selected kingdom and phylum
-  const classes = useMemo(() => {
-    if (!selectedKingdom || !selectedPhylum) return []
-    return taxa.filter((t) => t.kingdom === selectedKingdom && t.phylum === selectedPhylum)
-  }, [taxa, selectedKingdom, selectedPhylum])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -137,82 +125,29 @@ export default function NewAssessmentForm({
           />
         </div>
 
-        {/* Taxonomic Classification */}
+        {/* Taxonomic Classification (Optional) */}
         <div className="border-t pt-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Taxonomic Classification
+            Link to Crop Taxonomy (Optional)
           </h3>
 
-          {/* Kingdom */}
-          <div className="mb-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Kingdom *
+              Select Crop Taxonomy
             </label>
             <select
-              value={selectedKingdom}
-              onChange={(e) => {
-                setSelectedKingdom(e.target.value)
-                setSelectedPhylum('')
-                setFormData({ ...formData, taxa_id: '' })
-              }}
+              value={formData.taxa_id}
+              onChange={(e) => setFormData({ ...formData, taxa_id: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              required
             >
-              <option value="">Select Kingdom</option>
-              {kingdoms.map((kingdom) => (
-                <option key={kingdom} value={kingdom}>
-                  {kingdom}
+              <option value="">None (Optional)</option>
+              {sortedTaxa.map((taxon) => (
+                <option key={taxon.id} value={taxon.id}>
+                  {taxon.english_common_name || taxon.genus} - {taxon.genus} {taxon.species}
                 </option>
               ))}
             </select>
           </div>
-
-          {/* Phylum */}
-          {selectedKingdom && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phylum *
-              </label>
-              <select
-                value={selectedPhylum}
-                onChange={(e) => {
-                  setSelectedPhylum(e.target.value)
-                  setFormData({ ...formData, taxa_id: '' })
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                required
-              >
-                <option value="">Select Phylum</option>
-                {phyla.map((phylum) => (
-                  <option key={phylum} value={phylum}>
-                    {phylum}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Class */}
-          {selectedKingdom && selectedPhylum && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Class *
-              </label>
-              <select
-                value={formData.taxa_id}
-                onChange={(e) => setFormData({ ...formData, taxa_id: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                required
-              >
-                <option value="">Select Class</option>
-                {classes.map((taxon) => (
-                  <option key={taxon.id} value={taxon.id}>
-                    {taxon.class} ({taxon.spp_count} species)
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
 
         {/* Type of Assessment */}
