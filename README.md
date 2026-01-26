@@ -4,20 +4,20 @@ A comprehensive full-stack platform for managing threat assessments with collabo
 
 ## Features
 
-- 🔐 **Secure Authentication**: Email/password authentication with Supabase Auth
-- 👥 **User Management**: Create projects (working sets) and assign users with role-based permissions
-- 📋 **Assessment Workflow**: Track assessments through 8 status stages from "Not Started" to "Published"
-- 🔍 **Advanced Filtering**: Search and filter assessments by status, assignee, type, and more
-- 🎯 **User Assignment**: Assign team members to specific assessments with notifications
-- 📊 **Progress Tracking**: Visual progress indicators for assessment completion
-- 🔔 **Notifications**: Real-time notifications for assignments and project updates
-- 🏗️ **Project Organization**: Organize assessments into projects with team collaboration
-- 🔒 **Row Level Security**: Database-level security policies for data protection
+- Secure Authentication: Email/password authentication with Supabase Auth
+-  User Management: Create projects (working sets) and assign users with role-based permissions
+-  Assessment Workflow: Track assessments through 8 status stages from "Not Started" to "Published"
+-  Advanced Filtering: Search and filter assessments by status, assignee, type, and more
+-  User Assignment: Assign team members to specific assessments with notifications
+- Progress Tracking: Visual progress indicators for assessment completion
+- Notifications: Real-time notifications for assignments and project updates
+- Project Organization: Organize assessments into projects with team collaboration
+- Row Level Security: Database-level security policies for data protection
 
 ## Prerequisites
 
 - Node.js 18+ and npm
-- A Supabase account (free tier works)
+- A Supabase account (free tier)
 - Git
 
 ## Quick Start
@@ -50,8 +50,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```bash
 npm run dev
 ```
-
-Open [http://localhost:3000](http://localhost:3000)
 
 ## Database Setup
 
@@ -117,17 +115,13 @@ threat-assessment-platform/
 
 ## Deployment
 
-### Vercel (Recommended)
+### Vercel 
 
 1. Push to GitHub
 2. Import to Vercel
 3. Add environment variables
 4. Update Supabase redirect URLs
 5. Deploy!
-
-### Other Platforms
-
-Works on: AWS Amplify, Netlify, Railway, Digital Ocean
 
 **Build command**: `npm run build`
 
@@ -159,4 +153,4 @@ MIT License
 
 ---
 
-Built with ❤️ using Next.js and Supabase
+Built using Next.js and Supabase
