@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { User } from '@supabase/supabase-js'
+import Link from 'next/link'
 
 interface DashboardHeaderProps {
   user: User
@@ -12,6 +13,13 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({ user, profile }: DashboardHeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const notificationRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const supabase = createClient()
 
@@ -21,43 +29,224 @@ export default function DashboardHeader({ user, profile }: DashboardHeaderProps)
     router.refresh()
   }
 
-  const initials = profile?.name
-    ? profile.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
-    : user.email?.[0].toUpperCase()
+  // Load notifications
+  useEffect(() => {
+    const loadNotifications = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      
+      if (data) setNotifications(data)
+    }
+    loadNotifications()
+  }, [supabase, user.id])
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false)
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Search function
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query)
+    
+    if (!query.trim()) {
+      setSearchResults([])
+      setShowSearchResults(false)
+      return
+    }
+
+    // Search threat assessments
+    const { data: assessments } = await supabase
+      .from('Threat Assessments')
+      .select('LR_Threat_Asses_ID, LR_Name, Crop, Threat_Category')
+      .or(`LR_Name.ilike.%${query}%,Crop.ilike.%${query}%`)
+      .limit(5)
+
+    // Search working sets
+    const { data: projects } = await supabase
+      .from('projects')
+      .select('id, name, description')
+      .ilike('name', `%${query}%`)
+      .limit(5)
+
+    const results = [
+      ...(assessments || []).map(a => ({
+        type: 'assessment',
+        id: a.LR_Threat_Asses_ID,
+        title: a.LR_Name,
+        subtitle: a.Crop,
+        badge: a.Threat_Category,
+      })),
+      ...(projects || []).map(p => ({
+        type: 'project',
+        id: p.id,
+        title: p.name,
+        subtitle: p.description,
+      })),
+    ]
+
+    setSearchResults(results)
+    setShowSearchResults(true)
+  }
+
+  const initials = profile?.first_name?.[0]?.toUpperCase() || user.email?.[0].toUpperCase()
+  const displayName = profile?.first_name || profile?.last_name 
+    ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+    : user.email
 
   return (
     <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6">
-      <div className="flex items-center flex-1">
+      <div className="flex items-center flex-1 relative" ref={searchRef}>
         <input
           type="text"
           placeholder="Search projects, assessments..."
+          value={searchQuery}
+          onChange={(e) => handleSearch(e.target.value)}
+          onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
           className="w-96 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
         />
+        
+        {/* Search Results Dropdown */}
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="absolute top-full left-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto z-50">
+            {searchResults.map((result, index) => (
+              <Link
+                key={`${result.type}-${result.id}`}
+                href={result.type === 'assessment' ? '/dashboard/assessments' : `/dashboard/projects/${result.id}`}
+                onClick={() => {
+                  setShowSearchResults(false)
+                  setSearchQuery('')
+                }}
+                className="block px-4 py-3 hover:bg-gray-50 border-b last:border-b-0"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
+                        {result.type === 'assessment' ? 'Assessment' : 'Working Set'}
+                      </span>
+                      {result.badge && (
+                        <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                          {result.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-medium text-gray-900 mt-1">{result.title}</p>
+                    {result.subtitle && (
+                      <p className="text-sm text-gray-600 truncate">{result.subtitle}</p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex items-center space-x-4">
-        <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-          <span className="text-xl">🔔</span>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+        <div className="relative" ref={notificationRef}>
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            <span className="text-xl">🔔</span>
+            {notifications.some(n => !n.read) && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            )}
+          </button>
+          
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
+              <div className="p-3 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">Notifications</h3>
+                <Link 
+                  href="/dashboard/notifications"
+                  onClick={() => setShowNotifications(false)}
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  View all
+                </Link>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-3 border-b last:border-b-0 hover:bg-gray-50 ${
+                        !notification.read ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-900">{notification.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(notification.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <span className="ml-2 w-2 h-2 bg-blue-600 rounded-full mt-1"></span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-6 text-center text-gray-500">
+                    <p className="text-sm">No notifications</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <div className="relative">
           <button
             onClick={() => setShowDropdown(!showDropdown)}
             className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg"
           >
-            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">
-              {initials}
-            </div>
+            {profile?.avatar_url ? (
+              <img 
+                src={profile.avatar_url} 
+                alt="Avatar" 
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">
+                {initials}
+              </div>
+            )}
             <span className="text-sm font-medium text-gray-700">
-              {profile?.name || user.email}
+              {displayName}
             </span>
           </button>
           {showDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
               <button
+                onClick={() => {
+                  setShowDropdown(false)
+                  router.push('/dashboard/profile/edit')
+                }}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Edit Profile
+              </button>
+              <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
-                Logout
+                Log out
               </button>
             </div>
           )}

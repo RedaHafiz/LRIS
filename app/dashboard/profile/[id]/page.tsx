@@ -58,11 +58,23 @@ export default async function ProfilePage({ params }: { params: { id: string } }
           {/* Header Section */}
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-8 py-12">
             <div className="flex items-center">
-              <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-4xl font-bold text-blue-600">
-                {profile.name ? profile.name.charAt(0).toUpperCase() : profile.email.charAt(0).toUpperCase()}
-              </div>
+              {profile.avatar_url ? (
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Profile avatar" 
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center text-4xl font-bold text-blue-600">
+                  {profile.first_name?.[0]?.toUpperCase() || profile.email[0].toUpperCase()}
+                </div>
+              )}
               <div className="ml-6 text-white">
-                <h2 className="text-3xl font-bold">{profile.name || 'Anonymous'}</h2>
+                <h2 className="text-3xl font-bold">
+                  {profile.first_name || profile.last_name 
+                    ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() 
+                    : 'Anonymous'}
+                </h2>
                 <p className="text-blue-100 mt-1">{profile.email}</p>
               </div>
             </div>

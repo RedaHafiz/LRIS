@@ -57,7 +57,7 @@ export default async function WorkingSetsPage() {
           {workingSets.map((workingSet: any) => (
             <Link
               key={workingSet.id}
-              href={`/dashboard/working-sets/${workingSet.id}`}
+              href={`/dashboard/projects/${workingSet.id}`}
               className="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-lg transition-shadow"
             >
               <h3 className="text-xl font-semibold text-gray-900 mb-2">

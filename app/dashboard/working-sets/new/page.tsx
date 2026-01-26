@@ -1,21 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import CreateWorkingSetForm from '@/components/working-sets/CreateWorkingSetForm'
+'use client'
 
-export default async function NewWorkingSetPage() {
-  const supabase = await createClient()
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import CreateProjectModal from '@/components/projects/CreateProjectModal'
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+export default function NewWorkingSetPage() {
+  const router = useRouter()
 
   return (
-    <div className="p-8">
-      <CreateWorkingSetForm userId={user.id} />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <CreateProjectModal 
+        isOpen={true} 
+        onClose={() => router.push('/dashboard/working-sets')} 
+      />
     </div>
   )
 }

@@ -6,8 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 
 const mainNavItems = [
   { name: 'Home', href: '/dashboard' },
-  { name: 'Notifications', href: '/dashboard/notifications' },
-  { name: 'Search', href: '/dashboard/search' },
 ]
 
 const workspaceNavItems = [

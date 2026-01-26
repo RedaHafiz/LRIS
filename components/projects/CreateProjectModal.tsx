@@ -12,8 +12,7 @@ interface CreateProjectModalProps {
 interface SelectedUser {
   id: string
   email: string
-  first_name: string
-  last_name: string
+  name: string
   role: 'working_set_admin' | 'edit_assessments' | 'comment_only'
 }
 
@@ -29,50 +28,37 @@ export default function CreateProjectModal({
 
   // Step 1 fields
   const [projectName, setProjectName] = useState('')
-  const [assessmentType, setAssessmentType] = useState('Red List Assessment')
-  const [locale, setLocale] = useState('Global')
   const [description, setDescription] = useState('')
 
-  // Step 2 fields
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [selectedUsers, setSelectedUsers] = useState<SelectedUser[]>([])
+  // Step 2 fields - Assessments
+  const [availableAssessments, setAvailableAssessments] = useState<any[]>([])
+  const [selectedAssessments, setSelectedAssessments] = useState<string[]>([])
+  const [assessmentsLoaded, setAssessmentsLoaded] = useState(false)
 
-  const handleSearchUsers = async (query: string) => {
-    if (query.length < 2) {
-      setSearchResults([])
-      return
-    }
+  const loadAvailableAssessments = async () => {
+    if (assessmentsLoaded) return
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
     const { data } = await supabase
-      .from('profiles')
+      .from('Threat Assessments')
       .select('*')
-      .or(`first_name.ilike.%${query}%,last_name.ilike.%${query}%,email.ilike.%${query}%`)
-      .limit(10)
+      .or(`created_by.eq.${user.id},assignee_id.eq.${user.id}`)
+      .order('updated_at', { ascending: false })
 
-    setSearchResults(data || [])
+    setAvailableAssessments(data || [])
+    setAssessmentsLoaded(true)
   }
 
-  const handleAddUser = (user: any) => {
-    if (!selectedUsers.find((u) => u.id === user.id)) {
-      setSelectedUsers([
-        ...selectedUsers,
-        { ...user, role: 'edit_assessments' as const },
-      ])
+  const toggleAssessmentSelection = (assessmentId: string) => {
+    if (selectedAssessments.includes(assessmentId)) {
+      setSelectedAssessments(selectedAssessments.filter(id => id !== assessmentId))
+    } else {
+      setSelectedAssessments([...selectedAssessments, assessmentId])
     }
-    setSearchQuery('')
-    setSearchResults([])
   }
 
-  const handleRemoveUser = (userId: string) => {
-    setSelectedUsers(selectedUsers.filter((u) => u.id !== userId))
-  }
-
-  const handleRoleChange = (userId: string, role: any) => {
-    setSelectedUsers(
-      selectedUsers.map((u) => (u.id === userId ? { ...u, role } : u))
-    )
-  }
 
   const handleCreateProject = async () => {
     setLoading(true)
@@ -105,24 +91,12 @@ export default function CreateProjectModal({
         role: 'working_set_admin',
       })
 
-      // Add selected users
-      if (selectedUsers.length > 0) {
-        const userInserts = selectedUsers.map((u) => ({
-          project_id: project.id,
-          user_id: u.id,
-          role: u.role,
-        }))
-
-        await supabase.from('project_users').insert(userInserts)
-
-        // Create notifications for added users
-        const notifications = selectedUsers.map((u) => ({
-          user_id: u.id,
-          message: `You've been added to project: ${projectName}`,
-          type: 'project_invitation',
-        }))
-
-        await supabase.from('notifications').insert(notifications)
+      // Link selected assessments to project
+      if (selectedAssessments.length > 0) {
+        await supabase
+          .from('Threat Assessments')
+          .update({ project_id: project.id })
+          .in('id', selectedAssessments)
       }
 
       router.push(`/dashboard/projects/${project.id}`)
@@ -190,7 +164,7 @@ export default function CreateProjectModal({
                 >
                   2
                 </div>
-                <span className="font-medium text-gray-900">Add users</span>
+                <span className="font-medium text-gray-900">Select assessments</span>
               </div>
             </div>
           </div>
@@ -220,44 +194,12 @@ export default function CreateProjectModal({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type of assessment
-                  </label>
-                  <select
-                    value={assessmentType}
-                    onChange={(e) => setAssessmentType(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option>Red List Assessment</option>
-                    <option>Species Status Assessment</option>
-                    <option>Threat Assessment</option>
-                    <option>Conservation Assessment</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Locale
-                  </label>
-                  <select
-                    value={locale}
-                    onChange={(e) => setLocale(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option>Global</option>
-                    <option>Regional</option>
-                    <option>National</option>
-                    <option>Local</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Description
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="You can add a short description to help assessors understand the scope and requirements of this working set specifically."
+                    placeholder="Add a description for this working set to help organize your assessments."
                     rows={4}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -269,116 +211,89 @@ export default function CreateProjectModal({
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    SEARCH FOR USERS
+                    SELECT THREAT ASSESSMENTS
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value)
-                        handleSearchUsers(e.target.value)
-                      }}
-                      placeholder="Search by first name, last name or email"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    {searchResults.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                        {searchResults.map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => handleAddUser(user)}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-50"
-                          >
-                            {user.first_name} {user.last_name} ({user.email})
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Choose existing threat assessments to include in this working set.
+                  </p>
+                  {!assessmentsLoaded && (
+                    <button
+                      onClick={loadAvailableAssessments}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                    >
+                      Load available assessments
+                    </button>
+                  )}
+                  {assessmentsLoaded && availableAssessments.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>No assessments available. You can add assessments later.</p>
+                    </div>
+                  )}
+                  {assessmentsLoaded && availableAssessments.length > 0 && (
+                    <div className="space-y-2 max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+                      {availableAssessments.map((assessment) => (
+                        <label
+                          key={assessment.id}
+                          className="flex items-center p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedAssessments.includes(assessment.id)}
+                            onChange={() => toggleAssessmentSelection(assessment.id)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          />
+                          <div className="ml-3 flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {assessment.common_name || assessment.scientific_name || 'Untitled Assessment'}
+                            </p>
+                            {assessment.scientific_name && assessment.common_name && (
+                              <p className="text-xs text-gray-600 italic">
+                                {assessment.scientific_name}
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              Status: {assessment.status?.replace(/_/g, ' ') || 'Unknown'}
+                            </p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {selectedAssessments.length > 0 && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      {selectedAssessments.length} assessment{selectedAssessments.length !== 1 ? 's' : ''} selected
+                    </p>
+                  )}
                 </div>
-
-                {selectedUsers.length > 0 && (
-                  <div className="border border-gray-300 rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                            User
-                          </th>
-                          <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                            Permissions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {selectedUsers.map((user) => (
-                          <tr key={user.id}>
-                            <td className="px-4 py-3">
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-900">
-                                  {user.first_name} {user.last_name}
-                                </span>
-                                <button
-                                  onClick={() => handleRemoveUser(user.id)}
-                                  className="text-gray-400 hover:text-red-600"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <select
-                                value={user.role}
-                                onChange={(e) =>
-                                  handleRoleChange(user.id, e.target.value)
-                                }
-                                className="w-full px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="working_set_admin">
-                                  Working set admin
-                                </option>
-                                <option value="edit_assessments">
-                                  Edit assessments
-                                </option>
-                                <option value="comment_only">
-                                  Comment only
-                                </option>
-                              </select>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
               </div>
             )}
+
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200">
-          {step === 2 && (
+          {step > 1 && (
             <button
-              onClick={() => setStep(1)}
+              onClick={() => setStep(step - 1)}
               className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
             >
               Back
             </button>
           )}
-          {step === 1 ? (
+          {step === 1 && (
             <button
               onClick={() => setStep(2)}
               disabled={!projectName}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Next: add users
+              Next: select assessments
             </button>
-          ) : (
+          )}
+          {step === 2 && (
             <button
               onClick={handleCreateProject}
-              disabled={loading}
+              disabled={loading || selectedAssessments.length === 0}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Creating...' : 'Create working set'}

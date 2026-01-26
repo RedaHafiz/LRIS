@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -38,6 +38,12 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  
+  // Member management
+  const [allUsers, setAllUsers] = useState<any[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedReviewer, setSelectedReviewer] = useState('')
+  const [reviewerError, setReviewerError] = useState(false)
 
   // Form data
   const [formData, setFormData] = useState({
@@ -112,6 +118,33 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
     return taxa.filter(t => t.english_common_name === formData.crop)
   }, [taxa, formData.crop])
 
+  // Load all users for member selection
+  useEffect(() => {
+    const loadUsers = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, first_name, last_name, avatar_url')
+        .order('first_name')
+      
+      if (data) {
+        setAllUsers(data)
+      }
+    }
+    
+    loadUsers()
+  }, [supabase])
+
+  // Filter users based on search query
+  const filteredUsers = useMemo(() => {
+    if (!searchQuery) return allUsers
+    const query = searchQuery.toLowerCase()
+    return allUsers.filter(user => 
+      user.first_name?.toLowerCase().includes(query) ||
+      user.last_name?.toLowerCase().includes(query) ||
+      user.email?.toLowerCase().includes(query)
+    )
+  }, [allUsers, searchQuery])
+
   // Calculate threat scores (simplified - you may want more complex logic)
   const calculateThreatScores = () => {
     // Count how many criteria have scores
@@ -138,6 +171,14 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
   const handleSubmit = async () => {
     setIsSubmitting(true)
     setError('')
+    
+    // Validate reviewer is selected
+    if (!selectedReviewer) {
+      setReviewerError(true)
+      setError('Please select a reviewer before submitting.')
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       const scores = calculateThreatScores()
@@ -180,6 +221,53 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
             taxa_id: formData.taxa_id,
           })
       }
+      
+      // Assign reviewer
+      if (selectedReviewer) {
+        await supabase
+          .from('assessment_assignments')
+          .insert({
+            assessment_id: assessmentId,
+            user_id: selectedReviewer,
+            role: 'reviewer',
+          })
+        
+        // Create notification for the reviewer
+        const reviewerData = allUsers.find(u => u.id === selectedReviewer)
+        const reviewerName = reviewerData?.first_name || reviewerData?.last_name 
+          ? `${reviewerData.first_name || ''} ${reviewerData.last_name || ''}`.trim()
+          : reviewerData?.email || 'Reviewer'
+        
+        const notificationMessage = `You have been assigned as a reviewer for the threat assessment: "${formData.lr_name}" (${formData.crop})`
+        
+        // Create in-platform notification
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: selectedReviewer,
+            message: notificationMessage,
+            type: 'assignment',
+            read: false,
+          })
+        
+        // Send email notification
+        if (reviewerData?.email) {
+          try {
+            await fetch('/api/send-notification', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: reviewerData.email,
+                subject: 'New Reviewer Assignment - Threat Assessment Platform',
+                message: notificationMessage,
+              }),
+            })
+          } catch (emailError) {
+            console.error('Failed to send email notification:', emailError)
+            // Don't fail the whole submission if email fails
+          }
+        }
+      }
 
       router.push('/dashboard/assessments')
     } catch (err: any) {
@@ -190,7 +278,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
   }
 
   const nextStep = () => {
-    if (currentStep < 5) setCurrentStep(currentStep + 1)
+    if (currentStep < 6) setCurrentStep(currentStep + 1)
   }
 
   const prevStep = () => {
@@ -200,7 +288,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
   const renderStepIndicator = () => (
     <div className="mb-8">
       <div className="flex items-center justify-between">
-        {[1, 2, 3, 4, 5].map((step) => (
+        {[1, 2, 3, 4, 5, 6].map((step) => (
           <div key={step} className="flex items-center flex-1">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
               step === currentStep 
@@ -211,7 +299,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
             }`}>
               {step < currentStep ? '✓' : step}
             </div>
-            {step < 5 && (
+            {step < 6 && (
               <div className={`flex-1 h-1 mx-2 ${
                 step < currentStep ? 'bg-green-500' : 'bg-gray-200'
               }`} />
@@ -221,6 +309,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
       </div>
       <div className="flex justify-between mt-2 text-xs text-gray-600">
         <span>Assessment Unit</span>
+        <span>Add Members</span>
         <span>Data Collection</span>
         <span>Criteria Scoring</span>
         <span>Review Category</span>
@@ -270,7 +359,8 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                   {filteredLandraceNames.map((name) => (
                     <div
                       key={name}
-                      onClick={() => {
+                      onMouseDown={(e) => {
+                        e.preventDefault()
                         setFormData({ ...formData, lr_name: name })
                         setLandraceSearchTerm(name)
                         setShowLandraceSuggestions(false)
@@ -308,7 +398,8 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                   {filteredCropNames.map((name) => (
                     <div
                       key={name}
-                      onClick={() => {
+                      onMouseDown={(e) => {
+                        e.preventDefault()
                         setFormData({ ...formData, crop: name, taxa_id: '' })
                         setCropSearchTerm(name)
                         setShowCropSuggestions(false)
@@ -344,10 +435,82 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 2: Data Collection */}
+        {/* Step 2: Add Members */}
         {currentStep === 2 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 2: Representative Data Collection</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Step 2: Add Members</h2>
+            <p className="text-gray-600">Select a reviewer for this assessment (required).</p>
+
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${
+                reviewerError ? 'text-red-600' : 'text-gray-700'
+              }`}>
+                Reviewer * {reviewerError && <span className="text-red-600">(Please select a reviewer)</span>}
+              </label>
+              
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name or email..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 mb-3"
+              />
+              
+              <div className={`border rounded-lg max-h-64 overflow-y-auto ${
+                reviewerError ? 'border-red-500' : 'border-gray-300'
+              }`}>
+                {filteredUsers.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">No users found</div>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      onClick={() => {
+                        setSelectedReviewer(user.id)
+                        setReviewerError(false)
+                      }}
+                      className={`p-3 cursor-pointer border-b last:border-b-0 hover:bg-blue-50 ${
+                        selectedReviewer === user.id ? 'bg-blue-100 border-l-4 border-l-blue-600' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {user.avatar_url ? (
+                            <img 
+                              src={user.avatar_url} 
+                              alt="Avatar" 
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold">
+                              {user.first_name?.[0] || user.email[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {user.first_name || user.last_name 
+                                ? `${user.first_name || ''} ${user.last_name || ''}`.trim() 
+                                : 'No name'}
+                            </p>
+                            <p className="text-sm text-gray-600">{user.email}</p>
+                          </div>
+                        </div>
+                        {selectedReviewer === user.id && (
+                          <span className="text-blue-600 font-semibold">✓</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Data Collection */}
+        {currentStep === 3 && (
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-gray-900">Step 3: Representative Data Collection</h2>
             <p className="text-gray-600">Enter population descriptive and management data for this landrace.</p>
 
             <div>
@@ -385,14 +548,24 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 3: Criteria Scoring */}
-        {currentStep === 3 && (
+        {/* Step 4: Criteria Scoring */}
+        {currentStep === 4 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 3: Match Data Against Threat Criteria</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Step 4: Match Data Against Threat Criteria</h2>
             <p className="text-gray-600">Score each criterion based on your collected data (1-5 scale).</p>
             
-            <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded">
-              <strong>Scoring Guide:</strong> Rate each criterion from 1 (lowest threat) to 5 (highest threat)
+            <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-4 rounded">
+              <p>
+                <a 
+                  href="https://www.frontiersin.org/files/Articles/1336876/fpls-15-1336876-HTML/image_m/fpls-15-1336876-t001.jpg" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline font-medium"
+                >
+                  Refer to this for criteria
+                </a>
+              </p>
+              <p className="mt-2"><strong>Note:</strong> If a criterion is not applicable (NA), please type NA.</p>
             </div>
 
             <div className="space-y-8 max-h-[600px] overflow-y-auto pr-4">
@@ -595,10 +768,10 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 4: Review */}
-        {currentStep === 4 && (
+        {/* Step 5: Review */}
+        {currentStep === 5 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 4: Review Threat Category</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Step 5: Review Threat Category</h2>
             <p className="text-gray-600">Review the automatically calculated threat assessment results.</p>
 
             {(() => {
@@ -633,10 +806,10 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 5: Submit */}
-        {currentStep === 5 && (
+        {/* Step 6: Submit */}
+        {currentStep === 6 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 5: Submit for Expert Verification</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Step 6: Submit for Expert Verification</h2>
             <p className="text-gray-600">Your assessment is ready to be submitted. It will be added to the threat assessments database.</p>
 
             <div className="bg-green-50 p-6 rounded-lg">
@@ -659,13 +832,13 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
             Previous
           </button>
 
-          {currentStep < 5 ? (
+          {currentStep < 6 ? (
             <button
               type="button"
               onClick={nextStep}
               disabled={
                 (currentStep === 1 && (!formData.lr_name || !formData.crop)) ||
-                (currentStep === 2 && (!formData.lr_threat_assessor || !formData.assess_date))
+                (currentStep === 3 && (!formData.lr_threat_assessor || !formData.assess_date))
               }
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import NewAssessmentForm from '@/components/assessments/NewAssessmentForm'
+import ThreatAssessmentWizard from '@/components/assessments/ThreatAssessmentWizard'
 
 export default async function NewAssessmentPage({
   params,
@@ -35,13 +35,20 @@ export default async function NewAssessmentPage({
     redirect(`/dashboard/projects/${id}`)
   }
 
-  // Fetch all taxa for selection
+  // Fetch existing crop and landrace names from Threat Assessments
+  const { data: assessments } = await supabase
+    .from('Threat Assessments')
+    .select('Crop, LR_Name')
+
+  const existingCrops = [...new Set(assessments?.map(a => a.Crop).filter(Boolean) || [])]
+  const existingLandraces = [...new Set(assessments?.map(a => a.LR_Name).filter(Boolean) || [])]
+
+  // Fetch all taxa for optional taxonomy linking
   const { data: taxa } = await supabase
     .from('Taxa')
     .select('*')
-    .order('kingdom')
-    .order('phylum')
-    .order('class')
+    .order('crop_group')
+    .order('primary_crop_type')
 
   return (
     <div className="p-8">
@@ -52,7 +59,13 @@ export default async function NewAssessmentPage({
         </p>
       </div>
 
-      <NewAssessmentForm projectId={id} taxa={taxa || []} userId={user?.id || ''} />
+      <ThreatAssessmentWizard 
+        existingCrops={existingCrops}
+        existingLandraces={existingLandraces}
+        taxa={taxa || []} 
+        userId={user?.id || ''}
+        projectId={id}
+      />
     </div>
   )
 }

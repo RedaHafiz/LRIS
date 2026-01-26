@@ -15,7 +15,8 @@ interface Publication {
   added_by: string
   created_at: string
   profiles: {
-    name: string
+    first_name: string
+    last_name: string
     email: string
   }
 }

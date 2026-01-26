@@ -107,10 +107,16 @@ export default function LandraceAssessmentsView({
 
       {/* Assessments Table */}
       <div className="bg-white rounded-lg shadow border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">
             Landrace Threat Assessments ({filteredAssessments.length})
           </h2>
+          <button
+            onClick={() => window.open('https://www.frontiersin.org/files/Articles/1336876/fpls-15-1336876-HTML/image_m/fpls-15-1336876-t001.jpg', '_blank', 'width=1000,height=800,scrollbars=yes,resizable=yes')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
+          >
+            Click here for subcriteria information
+          </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -137,16 +143,16 @@ export default function LandraceAssessmentsView({
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Review Date
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-red-50" colSpan={3}>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-red-50" colSpan={9}>
                   Criterion A
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50" colSpan={4}>
                   Criterion B
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50" colSpan={3}>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-green-50" colSpan={4}>
                   Criterion C
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50" colSpan={5}>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-yellow-50" colSpan={7}>
                   Criterion D
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -173,6 +179,12 @@ export default function LandraceAssessmentsView({
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A1.1</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A1.2</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A1.3</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A2.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A2.2</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A2.3</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A2.4</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A3.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-red-50">A3.2</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-blue-50">B1.1</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-blue-50">B1.2</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-blue-50">B1.3</th>
@@ -180,11 +192,14 @@ export default function LandraceAssessmentsView({
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-green-50">C1.1</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-green-50">C1.2</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-green-50">C1.3</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-green-50">C2.1</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D1.1</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D1.2</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D1.3</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D2.1</th>
                 <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D2.2</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D3.1</th>
+                <th className="px-2 py-2 text-center text-xs text-gray-400 bg-yellow-50">D3.2</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
@@ -225,6 +240,24 @@ export default function LandraceAssessmentsView({
                   <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
                     {assessment['Subcriteria_Scores_A1.3'] || '-'}
                   </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A2.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A2.2'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A2.3'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A2.4'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A3.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-red-50">
+                    {assessment['Subcriteria_Scores_A3.2'] || '-'}
+                  </td>
                   {/* Criterion B scores */}
                   <td className="px-2 py-3 text-sm text-center text-gray-700 bg-blue-50">
                     {assessment['Subcriteria_Scores_B1.1'] || '-'}
@@ -248,6 +281,9 @@ export default function LandraceAssessmentsView({
                   <td className="px-2 py-3 text-sm text-center text-gray-700 bg-green-50">
                     {assessment['Subcriteria_Scores_C1.3'] || '-'}
                   </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-green-50">
+                    {assessment['Subcriteria_Scores_C2.1'] || '-'}
+                  </td>
                   {/* Criterion D scores */}
                   <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
                     {assessment['Subcriteria_Scores_D1.1'] || '-'}
@@ -263,6 +299,12 @@ export default function LandraceAssessmentsView({
                   </td>
                   <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
                     {assessment['Subcriteria_Scores_D2.2'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
+                    {assessment['Subcriteria_Scores_D3.1'] || '-'}
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center text-gray-700 bg-yellow-50">
+                    {assessment['Subcriteria_Scores_D3.2'] || '-'}
                   </td>
                   {/* Summary scores */}
                   <td className="px-4 py-3 text-sm text-gray-700 font-medium">

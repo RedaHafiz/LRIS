@@ -69,16 +69,13 @@ export default async function ProjectPage({
         {/* Assessments */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-lg shadow border border-gray-200">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+            <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
                 Assessments ({assessments?.length || 0})
               </h2>
-              <Link
-                href={`/dashboard/projects/${id}/assessments/new`}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
-              >
-                + New Assessment
-              </Link>
+              <p className="text-sm text-gray-600 mt-1">
+                Assessments created in this working set
+              </p>
             </div>
             <div className="p-6">
               {assessments && assessments.length > 0 ? (
@@ -126,13 +123,10 @@ export default async function ProjectPage({
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <p>No assessments yet.</p>
-                  <Link
-                    href={`/dashboard/projects/${id}/assessments/new`}
-                    className="text-blue-600 hover:underline mt-2 inline-block"
-                  >
-                    Create your first assessment
-                  </Link>
+                  <p>No assessments in this working set yet.</p>
+                  <p className="text-sm mt-2">
+                    Create assessments from the <Link href="/dashboard/assessments" className="text-blue-600 hover:underline">Assessments page</Link>
+                  </p>
                 </div>
               )}
             </div>
@@ -168,32 +162,6 @@ export default async function ProjectPage({
             </div>
           </div>
 
-          {/* Project Stats */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Statistics
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-600">Total Assessments</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {assessments?.length || 0}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {assessments?.filter((a) => a.status === 'published').length || 0}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">In Progress</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {assessments?.filter((a) => a.status === 'in_progress').length || 0}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

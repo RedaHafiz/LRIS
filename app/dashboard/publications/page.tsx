@@ -20,7 +20,8 @@ export default async function PublicationsPage() {
     .select(`
       *,
       profiles!publications_added_by_fkey (
-        name,
+        first_name,
+        last_name,
         email
       )
     `)

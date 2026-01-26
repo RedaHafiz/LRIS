@@ -14,8 +14,10 @@ export default function ProfileEditForm({ userId, currentProfile }: ProfileEditF
   const router = useRouter()
   const supabase = createClient()
   const [formData, setFormData] = useState({
-    name: currentProfile.name || '',
+    first_name: currentProfile.first_name || '',
+    last_name: currentProfile.last_name || '',
     organization: currentProfile.organization || '',
+    avatar_url: currentProfile.avatar_url || '',
     time_zone: currentProfile.time_zone || 'UTC',
   })
   const [loading, setLoading] = useState(false)
@@ -48,8 +50,10 @@ export default function ProfileEditForm({ userId, currentProfile }: ProfileEditF
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          name: formData.name,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
           organization: formData.organization,
+          avatar_url: formData.avatar_url,
           time_zone: formData.time_zone,
         })
         .eq('id', userId)
@@ -90,18 +94,33 @@ export default function ProfileEditForm({ userId, currentProfile }: ProfileEditF
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Name *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              placeholder="Your full name"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name *
+              </label>
+              <input
+                type="text"
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                placeholder="First name"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name *
+              </label>
+              <input
+                type="text"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                placeholder="Last name"
+                required
+              />
+            </div>
           </div>
 
           <div>
@@ -128,6 +147,32 @@ export default function ProfileEditForm({ userId, currentProfile }: ProfileEditF
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               placeholder="Your organization or institution"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Avatar URL (Optional)
+            </label>
+            <input
+              type="url"
+              value={formData.avatar_url}
+              onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              placeholder="https://example.com/avatar.jpg"
+            />
+            {formData.avatar_url && (
+              <div className="mt-3">
+                <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                <img 
+                  src={formData.avatar_url} 
+                  alt="Avatar preview" 
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-300"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none'
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div>

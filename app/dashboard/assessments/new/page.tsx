@@ -38,7 +38,7 @@ export default async function NewAssessmentPage() {
         existingCrops={existingCrops}
         existingLandraces={existingLandraces}
         taxa={taxa || []} 
-        userId={user.id} 
+        userId={user?.id || ''}
       />
     </div>
   )

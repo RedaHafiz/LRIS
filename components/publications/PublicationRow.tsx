@@ -21,7 +21,7 @@ export default function PublicationRow({ publication, currentUserId, isExpanded,
       .from('publication_comments')
       .select(`
         *,
-        profiles (name, email)
+        profiles (first_name, last_name, email)
       `)
       .eq('publication_id', publication.id)
       .order('created_at', { ascending: true })
@@ -59,7 +59,9 @@ export default function PublicationRow({ publication, currentUserId, isExpanded,
         <td className="px-6 py-4 text-sm text-gray-900">{publication.journal || '-'}</td>
         <td className="px-6 py-4 text-sm text-gray-900">{publication.year || '-'}</td>
         <td className="px-6 py-4 text-sm text-gray-900">
-          {publication.profiles?.name || publication.profiles?.email}
+          {publication.profiles?.first_name || publication.profiles?.last_name 
+            ? `${publication.profiles.first_name || ''} ${publication.profiles.last_name || ''}`.trim()
+            : publication.profiles?.email}
         </td>
         <td className="px-6 py-4 text-sm">
           <div className="flex gap-2">
@@ -109,7 +111,9 @@ export default function PublicationRow({ publication, currentUserId, isExpanded,
                     <div key={comment.id} className="bg-white p-3 rounded border border-gray-200">
                       <div className="flex justify-between mb-1">
                         <span className="font-medium text-sm text-gray-900">
-                          {comment.profiles.name || comment.profiles.email}
+                          {comment.profiles.first_name || comment.profiles.last_name
+                            ? `${comment.profiles.first_name || ''} ${comment.profiles.last_name || ''}`.trim()
+                            : comment.profiles.email}
                         </span>
                         <span className="text-xs text-gray-500">
                           {new Date(comment.created_at).toLocaleDateString()}
