@@ -19,6 +19,7 @@ interface ThreatAssessmentWizardProps {
   existingLandraces: string[]
   taxa: CropTaxon[]
   userId: string
+  projectId: string
 }
 
 // Threat category based on risk percentage
@@ -32,7 +33,7 @@ const getThreatCategory = (riskPercentage: number): string => {
   return 'Least Concern (LC)'
 }
 
-export default function ThreatAssessmentWizard({ existingCrops, existingLandraces, taxa, userId }: ThreatAssessmentWizardProps) {
+export default function ThreatAssessmentWizard({ existingCrops, existingLandraces, taxa, userId, projectId }: ThreatAssessmentWizardProps) {
   const router = useRouter()
   const supabase = createClient()
   const [currentStep, setCurrentStep] = useState(1)
