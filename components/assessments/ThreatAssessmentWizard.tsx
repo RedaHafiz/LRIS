@@ -19,7 +19,7 @@ interface ThreatAssessmentWizardProps {
   existingLandraces: string[]
   taxa: CropTaxon[]
   userId: string
-  projectId: string
+  projectId?: string
 }
 
 // Threat category based on risk percentage
