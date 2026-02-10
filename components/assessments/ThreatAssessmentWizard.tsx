@@ -318,7 +318,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
       }
       
       // Assign assessor (current user)
-      await supabase
+      const { error: assessorError } = await supabase
         .from('assessment_assignments')
         .insert({
           assessment_id: assessmentId,
@@ -326,15 +326,25 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           role: 'assessor',
         })
       
+      if (assessorError) {
+        console.error('Error assigning assessor:', assessorError)
+        throw assessorError
+      }
+      
       // Assign co-assessor if selected
       if (selectedCoAssessor) {
-        await supabase
+        const { error: coAssessorError } = await supabase
           .from('assessment_assignments')
           .insert({
             assessment_id: assessmentId,
             user_id: selectedCoAssessor,
             role: 'co-assessor',
           })
+        
+        if (coAssessorError) {
+          console.error('Error assigning co-assessor:', coAssessorError)
+          throw coAssessorError
+        }
         
         // Create notification for co-assessor
         const coAssessorData = allUsers.find(u => u.id === selectedCoAssessor)
@@ -374,13 +384,18 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
       
       // Assign reviewer
       if (selectedReviewer) {
-        await supabase
+        const { error: reviewerError } = await supabase
           .from('assessment_assignments')
           .insert({
             assessment_id: assessmentId,
             user_id: selectedReviewer,
             role: 'reviewer',
           })
+        
+        if (reviewerError) {
+          console.error('Error assigning reviewer:', reviewerError)
+          throw reviewerError
+        }
         
         // Create notification for the reviewer
         const reviewerData = allUsers.find(u => u.id === selectedReviewer)

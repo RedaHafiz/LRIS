@@ -24,14 +24,18 @@ export default async function MyAssessmentsPage() {
   const assignedAssessmentIds = userAssignments?.map(a => a.assessment_id) || []
 
   // Fetch only assessments where user has a role (assessor, co-assessor, or reviewer)
-  const { data: assessments } = await supabase
-    .from('Threat Assessments')
-    .select('*')
-    .in('LR_Threat_Asses_ID', assignedAssessmentIds.length > 0 ? assignedAssessmentIds : ['none'])
-    .order('Assess_Date', { ascending: false })
+  let assessments = []
+  if (assignedAssessmentIds.length > 0) {
+    const { data } = await supabase
+      .from('Threat Assessments')
+      .select('*')
+      .in('LR_Threat_Asses_ID', assignedAssessmentIds)
+      .order('Assess_Date', { ascending: false })
+    assessments = data || []
+  }
 
   // Enrich assessments with user role and comment counts
-  const enrichedAssessments = await Promise.all((assessments || []).map(async (assessment) => {
+  const enrichedAssessments = await Promise.all(assessments.map(async (assessment) => {
     const userRole = userAssignments?.find(a => a.assessment_id === assessment.LR_Threat_Asses_ID)?.role
     
     // Get comment count

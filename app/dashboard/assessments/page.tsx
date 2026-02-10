@@ -14,11 +14,10 @@ export default async function AssessmentsPage() {
     redirect('/login')
   }
 
-  // Fetch only APPROVED assessments for the public database
+  // Fetch all threat assessments from database
   const { data: assessments } = await supabase
     .from('Threat Assessments')
     .select('*')
-    .eq('status', 'approved')
     .order('Assess_Date', { ascending: false })
 
   // No need to enrich with user roles or comments for public database

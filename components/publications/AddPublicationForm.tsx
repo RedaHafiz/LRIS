@@ -12,16 +12,8 @@ interface AddPublicationFormProps {
 export default function AddPublicationForm({ userId }: AddPublicationFormProps) {
   const router = useRouter()
   const supabase = createClient()
-  const [formData, setFormData] = useState({
-    title: '',
-    authors: '',
-    journal: '',
-    year: '',
-    doi: '',
-    abstract: '',
-  })
+  const [doi, setDoi] = useState('')
   const [file, setFile] = useState<File | null>(null)
-  const [linkToProfile, setLinkToProfile] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -78,13 +70,13 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.title || !formData.authors || !formData.doi || !file) {
-      setError('Title, authors, DOI, and file upload are required')
+    if (!doi || !file) {
+      setError('DOI and file upload are required')
       return
     }
     
     // Check for duplicate DOI
-    const isDuplicate = await checkDOI(formData.doi)
+    const isDuplicate = await checkDOI(doi)
     if (isDuplicate) {
       return
     }
@@ -134,17 +126,17 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
       const { error: insertError } = await supabase
         .from('publications')
         .insert({
-          title: formData.title,
-          authors: formData.authors,
-          journal: formData.journal || null,
-          year: formData.year ? parseInt(formData.year) : null,
-          doi: formData.doi.trim(),
+          title: null,
+          authors: null,
+          journal: null,
+          year: null,
+          doi: doi.trim(),
           url: null,
-          abstract: formData.abstract || null,
+          abstract: null,
           file_url: fileUrl,
           file_name: fileName,
           file_size: fileSize,
-          added_by: linkToProfile ? userId : null,
+          added_by: userId,
         })
 
       if (insertError) throw insertError
@@ -225,6 +217,29 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* DOI */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              DOI *
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={doi}
+                onChange={(e) => setDoi(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                placeholder="10.1234/example"
+                required
+              />
+              {doiCheckLoading && (
+                <div className="absolute right-3 top-2.5">
+                  <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Will be checked for duplicates</p>
+          </div>
+
           {/* File Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -242,120 +257,7 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
                 Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX (Max 10MB) - Required</p>
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Title *
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              placeholder="Publication title"
-              required
-            />
-          </div>
-
-          {/* Authors */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Authors *
-            </label>
-            <input
-              type="text"
-              value={formData.authors}
-              onChange={(e) => setFormData({ ...formData, authors: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              placeholder="Author names (separated by commas)"
-              required
-            />
-          </div>
-
-          {/* Journal */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Journal / Conference
-            </label>
-            <input
-              type="text"
-              value={formData.journal}
-              onChange={(e) => setFormData({ ...formData, journal: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              placeholder="Publication venue"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Year */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Year
-              </label>
-              <input
-                type="number"
-                value={formData.year}
-                onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                placeholder="2024"
-                min="1900"
-                max="2100"
-              />
-            </div>
-
-            {/* DOI */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                DOI *
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={formData.doi}
-                  onChange={(e) => setFormData({ ...formData, doi: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  placeholder="10.1234/example"
-                  required
-                />
-                {doiCheckLoading && (
-                  <div className="absolute right-3 top-2.5">
-                    <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Will be checked for duplicates</p>
-            </div>
-          </div>
-
-          {/* Abstract */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Abstract
-            </label>
-            <textarea
-              value={formData.abstract}
-              onChange={(e) => setFormData({ ...formData, abstract: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              rows={5}
-              placeholder="Publication abstract or summary"
-            />
-          </div>
-
-          {/* Link to Profile */}
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="linkToProfile"
-              checked={linkToProfile}
-              onChange={(e) => setLinkToProfile(e.target.checked)}
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="linkToProfile" className="ml-2 text-sm text-gray-700">
-              Link this publication to my profile
-            </label>
+            <p className="text-xs text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX (Max 10MB)</p>
           </div>
 
           <div className="flex gap-3 pt-4">

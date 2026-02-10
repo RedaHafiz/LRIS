@@ -82,98 +82,21 @@ export default function CropTaxonomyView({ taxa }: CropTaxonomyViewProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Sidebar with taxonomy tree */}
-      <div className="lg:col-span-1">
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-4 sticky top-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Crop Groups
-          </h3>
-
-          <input
-            type="text"
-            placeholder="Search crops..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-gray-900"
-          />
-
-          <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto">
-            {Object.keys(hierarchy).map((group) => {
-              const isGroupExpanded = expandedGroups.has(group)
-              const typeCount = Object.keys(hierarchy[group]).length
-
-              return (
-                <div key={group} className="border-l-2 border-gray-300 pl-2">
-                  <button
-                    onClick={() => toggleGroup(group)}
-                    className="w-full flex items-center justify-between py-2 px-2 hover:bg-gray-50 rounded text-left"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-gray-500">
-                        {isGroupExpanded ? '▼' : '▶'}
-                      </span>
-                      <span className="font-medium text-gray-900">{group}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {typeCount} types
-                    </span>
-                  </button>
-
-                  {isGroupExpanded && (
-                    <div className="ml-4 mt-1 space-y-1">
-                      {Object.entries(hierarchy[group]).map(([type, crops]) => {
-                        const typeKey = `${group}-${type}`
-                        const isTypeExpanded = expandedTypes.has(typeKey)
-
-                        return (
-                          <div key={typeKey}>
-                            <button
-                              onClick={() => toggleType(typeKey)}
-                              className="w-full flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded text-left"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <span className="text-gray-400 text-sm">
-                                  {isTypeExpanded ? '▼' : '▶'}
-                                </span>
-                                <span className="text-sm text-gray-700">{type}</span>
-                              </div>
-                              <span className="text-xs text-gray-500">
-                                {crops.length}
-                              </span>
-                            </button>
-
-                            {isTypeExpanded && (
-                              <div className="ml-4 mt-1 space-y-1">
-                                {crops.map((taxon) => (
-                                  <div
-                                    key={taxon.id}
-                                    className="py-1 px-2 text-sm text-gray-600 hover:bg-blue-50 rounded cursor-pointer"
-                                  >
-                                    {taxon.primary_crop_subtype || taxon.english_common_name || 'Unknown'}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-
+    <div>
       {/* Main content area */}
-      <div className="lg:col-span-3">
+      <div>
         <div className="bg-white rounded-lg shadow border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 space-y-4">
             <h2 className="text-xl font-semibold text-gray-900">
               All Crops ({filteredTaxa.length})
             </h2>
+            <input
+              type="text"
+              placeholder="Search by common name, scientific name, or crop type..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
           </div>
           <div className="p-6">
             <div className="overflow-x-auto">
