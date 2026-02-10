@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import LandraceAssessmentsView from '@/components/assessments/LandraceAssessmentsView'
 import Link from 'next/link'
 
