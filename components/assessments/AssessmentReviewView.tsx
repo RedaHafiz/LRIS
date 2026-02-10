@@ -95,7 +95,7 @@ export default function AssessmentReviewView({
           })
       }
 
-      router.push('/dashboard/assessments')
+      router.push('/dashboard/my-assessments')
       router.refresh()
     } catch (err: any) {
       setError(err.message)
@@ -139,7 +139,7 @@ export default function AssessmentReviewView({
           })
       }
 
-      router.push('/dashboard/assessments')
+      router.push('/dashboard/my-assessments')
       router.refresh()
     } catch (err: any) {
       setError(err.message)

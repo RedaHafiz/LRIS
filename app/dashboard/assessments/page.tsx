@@ -14,53 +14,28 @@ export default async function AssessmentsPage() {
     redirect('/login')
   }
 
-  // Fetch user's assignments to know their role in each assessment
-  const { data: userAssignments } = await supabase
-    .from('assessment_assignments')
-    .select('assessment_id, role')
-    .eq('user_id', user.id)
-
-  // Fetch all assessments (landrace threat assessments)
+  // Fetch only APPROVED assessments for the public database
   const { data: assessments } = await supabase
     .from('Threat Assessments')
     .select('*')
+    .eq('status', 'approved')
     .order('Assess_Date', { ascending: false })
 
-  // Enrich assessments with user role and comment counts
-  const enrichedAssessments = await Promise.all((assessments || []).map(async (assessment) => {
-    const userRole = userAssignments?.find(a => a.assessment_id === assessment.LR_Threat_Asses_ID)?.role
-    
-    // Get comment count
-    const { count } = await supabase
-      .from('assessment_comments')
-      .select('*', { count: 'exact', head: true })
-      .eq('assessment_id', assessment.LR_Threat_Asses_ID)
-    
-    return {
-      ...assessment,
-      userRole,
-      commentCount: count || 0
-    }
-  }))
+  // No need to enrich with user roles or comments for public database
+  // These are approved assessments accessible to everyone
 
   return (
     <div className="p-8">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Landrace Threat Assessments</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Threat Assessment Database</h1>
           <p className="text-gray-600 mt-1">
-            Browse and search landrace threat assessments
+            Browse approved threat assessments
           </p>
         </div>
-        <Link
-          href="/dashboard/assessments/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-        >
-          + Create New Assessment
-        </Link>
       </div>
       <LandraceAssessmentsView
-        initialAssessments={enrichedAssessments}
+        initialAssessments={assessments || []}
         userId={user.id}
       />
     </div>

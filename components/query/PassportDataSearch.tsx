@@ -194,7 +194,6 @@ export default function PassportDataSearch() {
         .from('Threat Assessments')
         .select('*')
         .eq('LR_Name', landraceName)
-        .eq('status', 'approved')
         .order('Assess_Date', { ascending: false })
 
       if (error) {

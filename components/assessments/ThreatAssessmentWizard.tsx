@@ -419,7 +419,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
         }
       }
 
-      router.push('/dashboard/assessments')
+      router.push('/dashboard/my-assessments')
     } catch (err: any) {
       setError(err.message || 'Failed to create assessment')
     } finally {

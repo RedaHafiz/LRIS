@@ -9,8 +9,8 @@ const mainNavItems = [
 ]
 
 const workspaceNavItems = [
-  { name: 'Working sets', href: '/dashboard/working-sets' },
-  { name: 'My assessments', href: '/dashboard/assessments' },
+  { name: 'My assessments', href: '/dashboard/my-assessments' },
+  { name: 'Threat Assessment Database', href: '/dashboard/assessments' },
   { name: 'Taxonomy', href: '/dashboard/taxonomy' },
   { name: 'Publications', href: '/dashboard/publications' },
 ]
