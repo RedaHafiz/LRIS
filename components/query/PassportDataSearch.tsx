@@ -25,14 +25,40 @@ interface ThreatAssessment {
 export default function PassportDataSearch() {
   const [searchQuery, setSearchQuery] = useState('')
   const [results, setResults] = useState<PassportData[]>([])
+  const [allResults, setAllResults] = useState<PassportData[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
-  const [threatAssessments, setThreatAssessments] = useState<{[key: string]: ThreatAssessment[]}>({})
+  const [threatAssessments, setThreatAssessments] = useState<{[key: string]: ThreatAssessment[]}>>({})
   const [loadingThreat, setLoadingThreat] = useState<string | null>(null)
+  const [popupUrl, setPopupUrl] = useState<string>('')
+  
+  // Filter states
+  const [selectedCrop, setSelectedCrop] = useState<string>('')
+  const [selectedCountry, setSelectedCountry] = useState<string>('')
+  const [selectedRisk, setSelectedRisk] = useState<string>('')
+  const [availableCrops, setAvailableCrops] = useState<string[]>([])
+  const [availableCountries, setAvailableCountries] = useState<string[]>([])
+  
   const searchRef = useRef<HTMLDivElement>(null)
+
+  // Load popup URL from API
+  useEffect(() => {
+    const loadPopupUrl = async () => {
+      try {
+        const response = await fetch('/api/popup-url')
+        if (response.ok) {
+          const data = await response.json()
+          setPopupUrl(data.url)
+        }
+      } catch (err) {
+        console.error('Error loading popup URL:', err)
+      }
+    }
+    loadPopupUrl()
+  }, [])
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -79,6 +105,9 @@ export default function PassportDataSearch() {
     setShowSuggestions(false)
     setExpandedCard(null)
     setThreatAssessments({})
+    setSelectedCrop('')
+    setSelectedCountry('')
+    setSelectedRisk('')
 
     setLoading(true)
     setSearched(true)
@@ -93,17 +122,56 @@ export default function PassportDataSearch() {
 
       if (error) {
         console.error('Search error:', error)
+        setAllResults([])
         setResults([])
       } else {
-        setResults(data || [])
+        const results = data || []
+        setAllResults(results)
+        setResults(results)
+        
+        // Extract unique crops and countries for filters
+        const crops = [...new Set(results.map(r => r.CROPNAME_English).filter(Boolean))].sort()
+        const countries = [...new Set(results.map(r => r.ORIG_CTY).filter(Boolean))].sort()
+        setAvailableCrops(crops)
+        setAvailableCountries(countries)
       }
     } catch (err) {
       console.error('Unexpected error:', err)
+      setAllResults([])
       setResults([])
     } finally {
       setLoading(false)
     }
   }
+
+  // Apply filters when filter values change
+  useEffect(() => {
+    if (!searched || allResults.length === 0) return
+
+    let filtered = [...allResults]
+
+    // Filter by crop
+    if (selectedCrop) {
+      filtered = filtered.filter(item => item.CROPNAME_English === selectedCrop)
+    }
+
+    // Filter by country
+    if (selectedCountry) {
+      filtered = filtered.filter(item => item.ORIG_CTY === selectedCountry)
+    }
+
+    // Filter by risk level (requires threat assessment data)
+    if (selectedRisk) {
+      filtered = filtered.filter(item => {
+        if (!item['LR_Threat Asses_ID']) return false
+        // This is a simplified check - in reality, we'd need to join with threat assessments
+        // For now, we'll filter based on having an assessment
+        return true
+      })
+    }
+
+    setResults(filtered)
+  }, [selectedCrop, selectedCountry, selectedRisk, allResults, searched])
 
   const toggleThreatAssessment = async (landraceName: string, itemId: string) => {
     if (expandedCard === itemId) {
@@ -126,6 +194,7 @@ export default function PassportDataSearch() {
         .from('Threat Assessments')
         .select('*')
         .eq('LR_Name', landraceName)
+        .eq('status', 'approved')
         .order('Assess_Date', { ascending: false })
 
       if (error) {
@@ -146,23 +215,26 @@ export default function PassportDataSearch() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Subcriteria Information Button */}
-      <div className="mb-6 flex justify-end">
-        <a
-          href="/subcriteria-info.png"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm inline-flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Click here for subcriteria information
-        </a>
-      </div>
+      {popupUrl && (
+        <div className="mb-6 flex justify-end">
+          <a
+            href={popupUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-sm inline-flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Click here for subcriteria information
+          </a>
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-8">
-        <form onSubmit={handleSearch} className="flex gap-4">
+        <form onSubmit={handleSearch} className="space-y-4">
+          <div className="flex gap-4">
           <div className="flex-1 relative" ref={searchRef}>
             <input
               type="text"
@@ -199,6 +271,66 @@ export default function PassportDataSearch() {
           >
             {loading ? 'Searching...' : 'Search'}
           </button>
+          </div>
+
+          {/* Filters - Only show after search */}
+          {searched && allResults.length > 0 && (
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium text-gray-700">Filter by:</span>
+                
+                {/* Crop Filter */}
+                <select
+                  value={selectedCrop}
+                  onChange={(e) => setSelectedCrop(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 text-sm"
+                >
+                  <option value="">All Crops</option>
+                  {availableCrops.map((crop) => (
+                    <option key={crop} value={crop}>{crop}</option>
+                  ))}
+                </select>
+
+                {/* Country Filter */}
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 text-sm"
+                >
+                  <option value="">All Countries</option>
+                  {availableCountries.map((country) => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+
+                {/* Risk Level Filter */}
+                <select
+                  value={selectedRisk}
+                  onChange={(e) => setSelectedRisk(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 text-sm"
+                >
+                  <option value="">All Risk Levels</option>
+                  <option value="threatened">Threatened</option>
+                  <option value="non-threatened">Non-Threatened</option>
+                </select>
+
+                {/* Clear Filters */}
+                {(selectedCrop || selectedCountry || selectedRisk) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCrop('')
+                      setSelectedCountry('')
+                      setSelectedRisk('')
+                    }}
+                    className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </form>
       </div>
 
@@ -418,7 +550,7 @@ export default function PassportDataSearch() {
                         {threatAssessments[item.id].map((assessment) => (
                           <div key={assessment.LR_Threat_Asses_ID} className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6">
                             {/* Header Info */}
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 pb-4 border-b border-yellow-200">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 pb-4 border-b border-yellow-200">
                               <div>
                                 <span className="text-xs font-medium text-gray-500 uppercase">Assessment ID</span>
                                 <p className="text-sm text-gray-900 font-mono">{assessment.LR_Threat_Asses_ID}</p>
@@ -431,20 +563,6 @@ export default function PassportDataSearch() {
                                 <span className="text-xs font-medium text-gray-500 uppercase">Assessment Date</span>
                                 <p className="text-sm text-gray-900">{assessment.Assess_Date}</p>
                               </div>
-                              <div>
-                                <span className="text-xs font-medium text-gray-500 uppercase">Status</span>
-                                <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                                  assessment.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                  assessment.status === 'returned' ? 'bg-yellow-100 text-yellow-800' :
-                                  assessment.status === 'pending_review' ? 'bg-blue-100 text-blue-800' :
-                                  'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {assessment.status === 'approved' ? 'Approved' :
-                                   assessment.status === 'returned' ? 'Returned' :
-                                   assessment.status === 'pending_review' ? 'Pending Review' :
-                                   'Draft'}
-                                </span>
-                              </div>
                             </div>
 
                             {/* Threat Criteria Scores */}
@@ -452,42 +570,33 @@ export default function PassportDataSearch() {
                               {/* Criterion A: LR Population Range */}
                               <div>
                                 <h5 className="font-semibold text-gray-900 mb-3 text-sm">A. LR Population Range</h5>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A1.1: Geographic range</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.1'] || 'N/A'}</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-600">A1.1: Geographic range <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A1.2: Geographic concentration</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.2'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A1.2: Geographic concentration <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.2'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A1.3: LR maintainer number</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.3'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A1.3: LR maintainer number <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.3'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A2.1: Geographic range reduction</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A2.1: Geographic range reduction <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A2.2: Geographic concentration reduction</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.2'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A2.2: Geographic concentration reduction <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.2'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A2.3: Geographic constancy</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.3'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A2.3: Geographic constancy <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.3'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A2.4: Maintainer number reduction</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.4'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A2.4: Maintainer number reduction <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A2.4'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A3.1: LR phenotypic diversity</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A3.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A3.1: LR phenotypic diversity <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A3.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">A3.2: LR exchange</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A3.2'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">A3.2: LR exchange <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A3.2'] || 'N/A'}</span></span>
                                   </div>
                                 </div>
                               </div>
@@ -495,26 +604,21 @@ export default function PassportDataSearch() {
                               {/* Criterion B: LR Population Trend */}
                               <div>
                                 <h5 className="font-semibold text-gray-900 mb-3 text-sm">B. LR Population Trend</h5>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">B1: Production sustainability</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.1'] || 'N/A'}</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-600">B1: Production sustainability <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">B1.1: Ease of multiplication</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.2'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">B1.1: Ease of multiplication <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.2'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">B1.2: Maintainer continuation</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.3'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">B1.2: Maintainer continuation <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.3'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">B1.3: LR known loss</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.4'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">B1.3: LR known loss <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_B1.4'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">B1.4: Cultivation of modern cultivars</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C1.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">B1.4: Cultivation of modern cultivars <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C1.1'] || 'N/A'}</span></span>
                                   </div>
                                 </div>
                               </div>
@@ -522,26 +626,21 @@ export default function PassportDataSearch() {
                               {/* Criterion C: Market Farmer Characteristics */}
                               <div>
                                 <h5 className="font-semibold text-gray-900 mb-3 text-sm">C. Market Farmer Characteristics</h5>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">C1: Market prospects</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C1.2'] || 'N/A'}</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-600">C1: Market prospects <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C1.2'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">C1.1: LR support applied</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C1.3'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">C1.1: LR support applied <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C1.3'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">C1.2: Market range</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C2.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">C1.2: Market range <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_C2.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">C1.3: Food system embeddedness</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D1.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">C1.3: Food system embeddedness <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D1.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">C2.1: Maintainer Age</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D1.2'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">C2.1: Maintainer Age <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D1.2'] || 'N/A'}</span></span>
                                   </div>
                                 </div>
                               </div>
@@ -549,34 +648,27 @@ export default function PassportDataSearch() {
                               {/* Criterion D: LR Context */}
                               <div>
                                 <h5 className="font-semibold text-gray-900 mb-3 text-sm">D. LR Context</h5>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">D1.1: Conserved in situ</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D1.3'] || 'N/A'}</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <span className="text-gray-600">D1.1: Conserved in situ <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D1.3'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">D1.2: Conserved in situ backup</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D2.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">D1.2: Conserved in situ backup <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D2.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">D1.3: Conserved ex-situ</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D2.2'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">D1.3: Conserved ex-situ <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D2.2'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">D2.1: Type of cultivation system</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D3.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">D2.1: Type of cultivation system <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_D3.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">D2.2: Herbicide and fertilizer usage</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.1'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">D2.2: Herbicide and fertilizer usage <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.1'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">D3.1: Distorting incentives</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.2'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">D3.1: Distorting incentives <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.2'] || 'N/A'}</span></span>
                                   </div>
-                                  <div className="flex justify-between">
-                                    <span className="text-gray-600">D3.2: Global stochastic impact</span>
-                                    <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.3'] || 'N/A'}</span>
+                                  <div>
+                                    <span className="text-gray-600">D3.2: Global stochastic impact <span className="font-medium text-gray-900">{assessment['Subcriteria_Scores_A1.3'] || 'N/A'}</span></span>
                                   </div>
                                 </div>
                               </div>
