@@ -31,7 +31,7 @@ export default function PassportDataSearch() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
-  const [threatAssessments, setThreatAssessments] = useState<{[key: string]: ThreatAssessment[]}>>({})
+  const [threatAssessments, setThreatAssessments] = useState<Record<string, ThreatAssessment[]>>({})
   const [loadingThreat, setLoadingThreat] = useState<string | null>(null)
   const [popupUrl, setPopupUrl] = useState<string>('')
   
