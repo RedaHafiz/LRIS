@@ -1,17 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
+
+  // Check for success message from password reset
+  useEffect(() => {
+    const message = searchParams.get('message')
+    if (message === 'reset-sent') {
+      setSuccessMessage('Password reset email has been sent! Check your inbox.')
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,6 +60,11 @@ export default function LoginPage() {
           {error && (
             <div className="rounded-md bg-red-50 p-4">
               <div className="text-sm text-red-800">{error}</div>
+            </div>
+          )}
+          {successMessage && (
+            <div className="rounded-md bg-green-50 p-4">
+              <div className="text-sm text-green-800">{successMessage}</div>
             </div>
           )}
           <div className="rounded-md shadow-sm -space-y-px">

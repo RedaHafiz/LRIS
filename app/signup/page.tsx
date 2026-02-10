@@ -20,14 +20,27 @@ export default function SignupPage() {
     setError(null)
     setLoading(true)
 
+    // Validate required fields
+    if (!firstName.trim()) {
+      setError('First name is required')
+      setLoading(false)
+      return
+    }
+
+    if (!lastName.trim()) {
+      setError('Last name is required')
+      setLoading(false)
+      return
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
           },
         },
       })
@@ -65,7 +78,7 @@ export default function SignupPage() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label htmlFor="firstName" className="sr-only">
-                  First name
+                  First name (required)
                 </label>
                 <input
                   id="firstName"
@@ -73,14 +86,14 @@ export default function SignupPage() {
                   type="text"
                   required
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="First name"
+                  placeholder="First name *"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
               </div>
               <div>
                 <label htmlFor="lastName" className="sr-only">
-                  Last name
+                  Last name (required)
                 </label>
                 <input
                   id="lastName"
@@ -88,7 +101,7 @@ export default function SignupPage() {
                   type="text"
                   required
                   className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Last name"
+                  placeholder="Last name *"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />

@@ -9,14 +9,38 @@ export default async function AssessmentsPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
+  if (!user) {
+    redirect('/login')
+  }
+
+  // Fetch user's assignments to know their role in each assessment
+  const { data: userAssignments } = await supabase
+    .from('assessment_assignments')
+    .select('assessment_id, role')
+    .eq('user_id', user.id)
+
   // Fetch all assessments (landrace threat assessments)
   const { data: assessments } = await supabase
     .from('Threat Assessments')
     .select('*')
     .order('Assess_Date', { ascending: false })
 
-  // Get unique assessors and reviewers for filtering
-  const projectUsers: any[] = []
+  // Enrich assessments with user role and comment counts
+  const enrichedAssessments = await Promise.all((assessments || []).map(async (assessment) => {
+    const userRole = userAssignments?.find(a => a.assessment_id === assessment.LR_Threat_Asses_ID)?.role
+    
+    // Get comment count
+    const { count } = await supabase
+      .from('assessment_comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('assessment_id', assessment.LR_Threat_Asses_ID)
+    
+    return {
+      ...assessment,
+      userRole,
+      commentCount: count || 0
+    }
+  }))
 
   return (
     <div className="p-8">
@@ -35,7 +59,8 @@ export default async function AssessmentsPage() {
         </Link>
       </div>
       <LandraceAssessmentsView
-        initialAssessments={assessments || []}
+        initialAssessments={enrichedAssessments}
+        userId={user.id}
       />
     </div>
   )

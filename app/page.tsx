@@ -9,8 +9,8 @@ export default function LandingPage() {
         <div className="mb-12 flex justify-center">
           <div className="relative w-64 h-64 md:w-80 md:h-80">
             <Image
-              src="/Level.png"
-              alt="Level Logo"
+              src="/LRIS (1).png"
+              alt="LRIS Logo"
               fill
               className="object-contain"
               priority

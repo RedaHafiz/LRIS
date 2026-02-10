@@ -1,18 +1,25 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 interface LandraceAssessmentsViewProps {
   initialAssessments: any[]
+  userId: string
 }
 
 export default function LandraceAssessmentsView({
   initialAssessments,
+  userId,
 }: LandraceAssessmentsViewProps) {
-  const [assessments] = useState(initialAssessments)
+  const [assessments, setAssessments] = useState(initialAssessments)
   const [searchQuery, setSearchQuery] = useState('')
   const [cropFilter, setCropFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const router = useRouter()
+  const supabase = createClient()
 
   // Filter assessments
   const filteredAssessments = useMemo(() => {
@@ -49,6 +56,59 @@ export default function LandraceAssessmentsView({
     if (lower.includes('medium') || lower.includes('moderate')) return 'bg-yellow-100 text-yellow-800'
     if (lower.includes('low')) return 'bg-green-100 text-green-800'
     return 'bg-blue-100 text-blue-800'
+  }
+
+  const handleEdit = (assessmentId: string) => {
+    router.push(`/dashboard/assessments/edit/${assessmentId}`)
+  }
+
+  const handleReview = (assessmentId: string) => {
+    router.push(`/dashboard/assessments/review/${assessmentId}`)
+  }
+
+  const handleDelete = async (assessmentId: string) => {
+    if (deleteConfirm !== assessmentId) {
+      setDeleteConfirm(assessmentId)
+      return
+    }
+
+    try {
+      // Delete from assessment_assignments
+      await supabase
+        .from('assessment_assignments')
+        .delete()
+        .eq('assessment_id', assessmentId)
+
+      // Delete from assessment_taxa if exists
+      await supabase
+        .from('assessment_taxa')
+        .delete()
+        .eq('assessment_id', assessmentId)
+
+      // Delete from notifications if exists
+      await supabase
+        .from('notifications')
+        .delete()
+        .like('message', `%${assessmentId}%`)
+
+      // Delete the assessment itself
+      const { error } = await supabase
+        .from('Threat Assessments')
+        .delete()
+        .eq('LR_Threat_Asses_ID', assessmentId)
+
+      if (error) throw error
+
+      // Update local state
+      setAssessments(assessments.filter(a => a.LR_Threat_Asses_ID !== assessmentId))
+      setDeleteConfirm(null)
+      
+      // Refresh the page to get updated data
+      router.refresh()
+    } catch (error: any) {
+      console.error('Error deleting assessment:', error)
+      alert(`Failed to delete assessment: ${error.message}`)
+    }
   }
 
   return (
@@ -167,6 +227,15 @@ export default function LandraceAssessmentsView({
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Category
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Comments
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase sticky left-0 bg-gray-50 z-10"></th>
@@ -204,6 +273,7 @@ export default function LandraceAssessmentsView({
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-400 uppercase"></th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-gray-400 uppercase"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -320,6 +390,62 @@ export default function LandraceAssessmentsView({
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getCategoryColor(assessment.Threat_Category)}`}>
                       {assessment.Threat_Category || 'N/A'}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      assessment.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      assessment.status === 'returned' ? 'bg-yellow-100 text-yellow-800' :
+                      assessment.status === 'pending_review' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {assessment.status === 'approved' ? 'Approved' :
+                       assessment.status === 'returned' ? 'Returned' :
+                       assessment.status === 'pending_review' ? 'Pending Review' :
+                       'Draft'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    {assessment.commentCount > 0 ? (
+                      <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        {assessment.commentCount}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <div className="flex items-center justify-center gap-2">
+                      {assessment.userRole === 'reviewer' ? (
+                        <button
+                          onClick={() => handleReview(assessment.LR_Threat_Asses_ID)}
+                          className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-xs font-medium transition-colors"
+                          title="Review assessment"
+                        >
+                          Review
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleEdit(assessment.LR_Threat_Asses_ID)}
+                            className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-medium transition-colors"
+                            title="Edit assessment"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(assessment.LR_Threat_Asses_ID)}
+                            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                              deleteConfirm === assessment.LR_Threat_Asses_ID
+                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                : 'bg-red-100 text-red-700 hover:bg-red-200'
+                            }`}
+                            title={deleteConfirm === assessment.LR_Threat_Asses_ID ? 'Click again to confirm' : 'Delete assessment'}
+                          >
+                            {deleteConfirm === assessment.LR_Threat_Asses_ID ? 'Confirm?' : 'Delete'}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

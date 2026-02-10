@@ -18,7 +18,6 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
     journal: '',
     year: '',
     doi: '',
-    url: '',
     abstract: '',
   })
   const [file, setFile] = useState<File | null>(null)
@@ -26,6 +25,9 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [doiCheckLoading, setDoiCheckLoading] = useState(false)
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
+  const [existingPublication, setExistingPublication] = useState<any>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -46,11 +48,44 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
     }
   }
 
+  const checkDOI = async (doi: string) => {
+    if (!doi.trim()) return false
+    
+    setDoiCheckLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('publications')
+        .select('*')
+        .eq('doi', doi.trim())
+        .maybeSingle()
+      
+      if (error) throw error
+      
+      if (data) {
+        setExistingPublication(data)
+        setShowDuplicateModal(true)
+        return true
+      }
+      return false
+    } catch (err) {
+      console.error('Error checking DOI:', err)
+      return false
+    } finally {
+      setDoiCheckLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.title || !formData.authors) {
-      setError('Title and authors are required')
+    if (!formData.title || !formData.authors || !formData.doi || !file) {
+      setError('Title, authors, DOI, and file upload are required')
+      return
+    }
+    
+    // Check for duplicate DOI
+    const isDuplicate = await checkDOI(formData.doi)
+    if (isDuplicate) {
       return
     }
 
@@ -59,41 +94,39 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
     setUploadProgress(0)
 
     try {
-      let fileUrl = null
-      let fileName = null
-      let fileSize = null
-
-      // Upload file if provided
-      if (file) {
-        const fileExt = file.name.split('.').pop()
-        const fileName_storage = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
-        const filePath = `${fileName_storage}`
-
-        setUploadProgress(30)
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('publications')
-          .upload(filePath, file)
-
-        if (uploadError) {
-          // If bucket doesn't exist, provide helpful error
-          if (uploadError.message.includes('Bucket not found')) {
-            throw new Error('Publications storage bucket not set up. Please contact administrator.')
-          }
-          throw uploadError
-        }
-
-        setUploadProgress(60)
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('publications')
-          .getPublicUrl(filePath)
-
-        fileUrl = urlData.publicUrl
-        fileName = file.name
-        fileSize = file.size
+      // File is now required, so no need to check
+      if (!file) {
+        setError('File upload is required')
+        return
       }
+      const fileExt = file.name.split('.').pop()
+      const fileName_storage = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`
+      const filePath = `${fileName_storage}`
+
+      setUploadProgress(30)
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('publications')
+        .upload(filePath, file)
+
+      if (uploadError) {
+        // If bucket doesn't exist, provide helpful error
+        if (uploadError.message.includes('Bucket not found')) {
+          throw new Error('Publications storage bucket not set up. Please contact administrator.')
+        }
+        throw uploadError
+      }
+
+      setUploadProgress(60)
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('publications')
+        .getPublicUrl(filePath)
+
+      const fileUrl = urlData.publicUrl
+      const fileName = file.name
+      const fileSize = file.size
 
       setUploadProgress(80)
 
@@ -105,8 +138,8 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
           authors: formData.authors,
           journal: formData.journal || null,
           year: formData.year ? parseInt(formData.year) : null,
-          doi: formData.doi || null,
-          url: formData.url || null,
+          doi: formData.doi.trim(),
+          url: null,
           abstract: formData.abstract || null,
           file_url: fileUrl,
           file_name: fileName,
@@ -128,12 +161,45 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
 
   return (
     <div>
+      {/* Duplicate DOI Modal */}
+      {showDuplicateModal && existingPublication && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-red-600 mb-3">Duplicate DOI Found</h3>
+            <p className="text-gray-700 mb-4">
+              A publication with DOI <strong>{existingPublication.doi}</strong> already exists in the database:
+            </p>
+            <div className="bg-gray-50 p-3 rounded border border-gray-200 mb-4">
+              <p className="font-medium text-gray-900">{existingPublication.title}</p>
+              <p className="text-sm text-gray-600 mt-1">{existingPublication.authors}</p>
+              {existingPublication.year && (
+                <p className="text-sm text-gray-500 mt-1">Year: {existingPublication.year}</p>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              To avoid duplicates, please verify the DOI or check if this publication is already in the system.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDuplicateModal(false)
+                  setExistingPublication(null)
+                }}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <Link href="/dashboard/publications" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
           ← Back to Publications
         </Link>
         <h1 className="text-3xl font-bold text-gray-900">Add Publication</h1>
-        <p className="text-gray-600 mt-1">Upload a publication file and add metadata</p>
+        <p className="text-gray-600 mt-1">Upload a publication file with DOI information</p>
       </div>
 
       <div className="bg-white rounded-lg shadow border border-gray-200 p-8">
@@ -162,20 +228,21 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
           {/* File Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload Publication File (Optional)
+              Upload Publication File *
             </label>
             <input
               type="file"
               accept=".pdf,.doc,.docx"
               onChange={handleFileChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+              required
             />
             {file && (
               <p className="text-sm text-green-600 mt-2">
                 Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
               </p>
             )}
-            <p className="text-xs text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX (Max 10MB)</p>
+            <p className="text-xs text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX (Max 10MB) - Required</p>
           </div>
 
           {/* Title */}
@@ -242,30 +309,25 @@ export default function AddPublicationForm({ userId }: AddPublicationFormProps) 
             {/* DOI */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                DOI
+                DOI *
               </label>
-              <input
-                type="text"
-                value={formData.doi}
-                onChange={(e) => setFormData({ ...formData, doi: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                placeholder="10.1234/example"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.doi}
+                  onChange={(e) => setFormData({ ...formData, doi: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  placeholder="10.1234/example"
+                  required
+                />
+                {doiCheckLoading && (
+                  <div className="absolute right-3 top-2.5">
+                    <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Will be checked for duplicates</p>
             </div>
-          </div>
-
-          {/* URL */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              External URL
-            </label>
-            <input
-              type="url"
-              value={formData.url}
-              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-              placeholder="https://..."
-            />
           </div>
 
           {/* Abstract */}

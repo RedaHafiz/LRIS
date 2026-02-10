@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function ResetPasswordPage() {
@@ -9,6 +10,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const router = useRouter()
   const supabase = createClient()
 
   const handleReset = async (e: React.FormEvent) => {
@@ -19,12 +21,18 @@ export default function ResetPasswordPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
+        redirectTo: `${window.location.origin}/login`,
       })
 
       if (error) throw error
 
-      setMessage('Check your email for the password reset link!')
+      // Show success message briefly then redirect to login
+      setMessage('Password reset email sent! Redirecting to login...')
+      
+      // Redirect to login page after 2 seconds
+      setTimeout(() => {
+        router.push('/login?message=reset-sent')
+      }, 2000)
     } catch (error: any) {
       setError(error.message)
     } finally {
