@@ -65,7 +65,7 @@ export default function LandraceAssessmentsView({
   }
 
   const handleReview = (assessmentId: string) => {
-    router.push(`/dashboard/assessments/edit/${assessmentId}`)
+    router.push(`/dashboard/assessments/review/${assessmentId}`)
   }
 
   const handleDelete = async (assessmentId: string) => {
@@ -93,9 +93,9 @@ export default function LandraceAssessmentsView({
         .delete()
         .like('message', `%${assessmentId}%`)
 
-      // Delete the assessment itself
+      // Delete the draft assessment
       const { error } = await supabase
-        .from('Threat Assessments')
+        .from('Threat Assessments_duplicate')
         .delete()
         .eq('LR_Threat_Asses_ID', assessmentId)
 

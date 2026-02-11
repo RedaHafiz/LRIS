@@ -127,9 +127,19 @@ export default function PassportDataSearch() {
         setAllResults(results)
         setResults(results)
         
-        // Extract unique crops and countries for filters
+        // Extract unique crops and countries for filters (normalize to remove duplicates)
         const crops = [...new Set(results.map(r => r.CROPNAME_English).filter(Boolean))].sort()
-        const countries = [...new Set(results.map(r => r.ORIG_CTY).filter(Boolean))].sort()
+        const countriesMap = new Map()
+        results.forEach(r => {
+          if (r.ORIG_CTY) {
+            const normalized = r.ORIG_CTY.trim()
+            const key = normalized.toLowerCase()
+            if (!countriesMap.has(key)) {
+              countriesMap.set(key, normalized)
+            }
+          }
+        })
+        const countries = Array.from(countriesMap.values()).sort()
         setAvailableCrops(crops)
         setAvailableCountries(countries)
         

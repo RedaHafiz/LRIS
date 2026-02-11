@@ -26,14 +26,14 @@ export default function AssessmentList({ initialAssessments }: AssessmentListPro
     setDeleting(assessmentId)
     try {
       const { error } = await supabase
-        .from('Threat Assessments')
+        .from('Threat Assessments_duplicate')
         .delete()
-        .eq('id', assessmentId)
+        .eq('LR_Threat_Asses_ID', assessmentId)
 
       if (error) throw error
 
       // Remove from local state
-      setAssessments(assessments.filter(a => a.id !== assessmentId))
+      setAssessments(assessments.filter(a => a.LR_Threat_Asses_ID !== assessmentId))
       router.refresh()
     } catch (error: any) {
       alert('Failed to delete assessment: ' + error.message)
@@ -58,46 +58,49 @@ export default function AssessmentList({ initialAssessments }: AssessmentListPro
           className="border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
         >
           <Link
-            href={`/dashboard/assessments/${assessment.id}`}
+            href={`/dashboard/assessments/edit/${assessment.LR_Threat_Asses_ID}`}
             className="block p-4"
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <h3 className="font-medium text-gray-900">
-                  {assessment.common_name || assessment.scientific_name || 'Untitled Assessment'}
+                  {assessment.LR_Name || 'Untitled Assessment'}
                 </h3>
-                {assessment.scientific_name && assessment.common_name && (
-                  <p className="text-sm text-gray-600 italic mt-1">
-                    {assessment.scientific_name}
-                  </p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Updated {new Date(assessment.updated_at).toLocaleDateString()}
+                <p className="text-sm text-gray-600 mt-1">
+                  Crop: {assessment.Crop || 'N/A'}
                 </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-xs text-gray-500">
+                    ID: {assessment.LR_Threat_Asses_ID}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(assessment.created_at).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center space-x-3">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    assessment.status === 'published'
-                      ? 'bg-green-100 text-green-800'
-                      : assessment.status === 'submitted'
-                      ? 'bg-green-100 text-green-800'
-                      : assessment.status === 'to_review'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : assessment.status === 'returned_with_comments'
+                    assessment.status === 'pending_review'
                       ? 'bg-blue-100 text-blue-800'
-                      : 'bg-orange-100 text-orange-800'
+                      : assessment.status === 'returned'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : assessment.status === 'draft'
+                      ? 'bg-gray-100 text-gray-800'
+                      : 'bg-green-100 text-green-800'
                   }`}
                 >
-                  {assessment.status.replace(/_/g, ' ')}
+                  {assessment.status === 'pending_review' ? 'Pending Review' :
+                   assessment.status === 'returned' ? 'Returned' :
+                   assessment.status === 'draft' ? 'Draft' : 'Approved'}
                 </span>
                 <button
-                  onClick={(e) => handleDelete(e, assessment.id)}
-                  disabled={deleting === assessment.id}
+                  onClick={(e) => handleDelete(e, assessment.LR_Threat_Asses_ID)}
+                  disabled={deleting === assessment.LR_Threat_Asses_ID}
                   className="text-red-600 hover:text-red-800 disabled:text-gray-400 disabled:cursor-not-allowed p-2"
                   title="Delete assessment"
                 >
-                  {deleting === assessment.id ? (
+                  {deleting === assessment.LR_Threat_Asses_ID ? (
                     <span className="text-xs">Deleting...</span>
                   ) : (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
