@@ -105,9 +105,6 @@ export default function PassportDataSearch() {
     setShowSuggestions(false)
     setExpandedCard(null)
     setThreatAssessments({})
-    setSelectedCrop('')
-    setSelectedCountry('')
-    setSelectedRisk('')
 
     setLoading(true)
     setSearched(true)

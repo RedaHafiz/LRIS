@@ -65,7 +65,7 @@ export default function LandraceAssessmentsView({
   }
 
   const handleReview = (assessmentId: string) => {
-    router.push(`/dashboard/assessments/review/${assessmentId}`)
+    router.push(`/dashboard/assessments/edit/${assessmentId}`)
   }
 
   const handleDelete = async (assessmentId: string) => {
@@ -234,9 +234,11 @@ export default function LandraceAssessmentsView({
                     Status
                   </th>
                 )}
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Comments
-                </th>
+                {showActions && (
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Comments
+                  </th>
+                )}
                 {showActions && (
                   <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
@@ -412,15 +414,17 @@ export default function LandraceAssessmentsView({
                       </span>
                     </td>
                   )}
-                  <td className="px-4 py-3 text-sm text-center">
-                    {assessment.commentCount > 0 ? (
-                      <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {assessment.commentCount}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </td>
+                  {showActions && (
+                    <td className="px-4 py-3 text-sm text-center">
+                      {assessment.commentCount > 0 ? (
+                        <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          {assessment.commentCount}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                  )}
                   {showActions && (
                     <td className="px-4 py-3 text-sm">
                       <div className="flex items-center justify-center gap-2">
