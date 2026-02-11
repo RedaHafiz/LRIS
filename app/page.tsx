@@ -7,7 +7,7 @@ export default function LandingPage() {
       <div className="max-w-4xl w-full text-center">
         {/* Logo */}
         <div className="mb-12 flex justify-center">
-          <div className="relative w-64 h-64 md:w-80 md:h-80">
+          <div className="relative w-full max-w-2xl h-96">
             <Image
               src="/LRIS (1).png"
               alt="LRIS Logo"

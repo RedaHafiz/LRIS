@@ -13,9 +13,9 @@ export default async function EditAssessmentPage({ params }: { params: { id: str
     redirect('/login')
   }
 
-  // Fetch the existing assessment
+  // Fetch the existing draft assessment
   const { data: assessment, error } = await supabase
-    .from('Threat Assessments')
+    .from('Threat Assessments_duplicate')
     .select('*')
     .eq('LR_Threat_Asses_ID', params.id)
     .single()
@@ -24,9 +24,9 @@ export default async function EditAssessmentPage({ params }: { params: { id: str
     notFound()
   }
 
-  // Fetch existing crop and landrace names from Threat Assessments
+  // Fetch existing crop and landrace names from drafts
   const { data: assessments } = await supabase
-    .from('Threat Assessments')
+    .from('Threat Assessments_duplicate')
     .select('Crop, LR_Name')
 
   const existingCrops = [...new Set(assessments?.map(a => a.Crop).filter(Boolean) || [])]

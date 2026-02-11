@@ -41,6 +41,7 @@ export default function PassportDataSearch() {
   const [selectedRisk, setSelectedRisk] = useState<string>('')
   const [availableCrops, setAvailableCrops] = useState<string[]>([])
   const [availableCountries, setAvailableCountries] = useState<string[]>([])
+  const [availableRiskLevels, setAvailableRiskLevels] = useState<string[]>([])
   
   const searchRef = useRef<HTMLDivElement>(null)
 
@@ -131,6 +132,9 @@ export default function PassportDataSearch() {
         const countries = [...new Set(results.map(r => r.ORIG_CTY).filter(Boolean))].sort()
         setAvailableCrops(crops)
         setAvailableCountries(countries)
+        
+        // Fetch threat assessments to get available risk levels
+        fetchAvailableRiskLevels(results.map(r => r.ACCE_NAME).filter(Boolean))
       }
     } catch (err) {
       console.error('Unexpected error:', err)
@@ -141,33 +145,59 @@ export default function PassportDataSearch() {
     }
   }
 
+  const fetchAvailableRiskLevels = async (landraceNames: string[]) => {
+    if (landraceNames.length === 0) return
+    
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('Threat Assessments')
+      .select('Threat_Category')
+      .in('LR_Name', landraceNames)
+    
+    if (data) {
+      const categories = [...new Set(data.map(d => d.Threat_Category).filter(Boolean))].sort()
+      setAvailableRiskLevels(categories)
+    }
+  }
+
   // Apply filters when filter values change
   useEffect(() => {
     if (!searched || allResults.length === 0) return
 
-    let filtered = [...allResults]
+    const applyFilters = async () => {
+      let filtered = [...allResults]
 
-    // Filter by crop
-    if (selectedCrop) {
-      filtered = filtered.filter(item => item.CROPNAME_English === selectedCrop)
+      // Filter by crop
+      if (selectedCrop) {
+        filtered = filtered.filter(item => item.CROPNAME_English === selectedCrop)
+      }
+
+      // Filter by country
+      if (selectedCountry) {
+        filtered = filtered.filter(item => item.ORIG_CTY === selectedCountry)
+      }
+
+      // Filter by risk level (requires fetching threat assessments)
+      if (selectedRisk) {
+        const supabase = createClient()
+        const landraceNames = filtered.map(item => item.ACCE_NAME).filter(Boolean)
+        
+        const { data: threatData } = await supabase
+          .from('Threat Assessments')
+          .select('LR_Name, Threat_Category')
+          .in('LR_Name', landraceNames)
+          .eq('Threat_Category', selectedRisk)
+        
+        if (threatData) {
+          const matchingNames = new Set(threatData.map(t => t.LR_Name))
+          filtered = filtered.filter(item => matchingNames.has(item.ACCE_NAME))
+        }
+      }
+
+      setResults(filtered)
     }
-
-    // Filter by country
-    if (selectedCountry) {
-      filtered = filtered.filter(item => item.ORIG_CTY === selectedCountry)
-    }
-
-    // Filter by risk level (requires threat assessment data)
-    if (selectedRisk) {
-      filtered = filtered.filter(item => {
-        if (!item['LR_Threat Asses_ID']) return false
-        // This is a simplified check - in reality, we'd need to join with threat assessments
-        // For now, we'll filter based on having an assessment
-        return true
-      })
-    }
-
-    setResults(filtered)
+    
+    applyFilters()
   }, [selectedCrop, selectedCountry, selectedRisk, allResults, searched])
 
   const toggleThreatAssessment = async (landraceName: string, itemId: string) => {
@@ -305,9 +335,10 @@ export default function PassportDataSearch() {
                   onChange={(e) => setSelectedRisk(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900 text-sm"
                 >
-                  <option value="">All Risk Levels</option>
-                  <option value="threatened">Threatened</option>
-                  <option value="non-threatened">Non-Threatened</option>
+                  <option value="">All Threat Categories</option>
+                  {availableRiskLevels.map((level) => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
                 </select>
 
                 {/* Clear Filters */}
