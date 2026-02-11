@@ -13,9 +13,9 @@ export default async function ReviewAssessmentPage({ params }: { params: { id: s
     redirect('/login')
   }
 
-  // Fetch the assessment
+  // Fetch the draft assessment
   const { data: assessment, error } = await supabase
-    .from('Threat Assessments')
+    .from('Threat Assessments_duplicate')
     .select('*')
     .eq('LR_Threat_Asses_ID', params.id)
     .single()

@@ -243,15 +243,15 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
         // Edit mode: use existing ID
         assessmentId = existingAssessment.LR_Threat_Asses_ID
       } else {
-        // Create mode: generate new chronological ID
+        // Create mode: generate new chronological ID based on drafts table
         const { count, error: countError } = await supabase
-          .from('Threat Assessments')
+          .from('Threat Assessments_duplicate')
           .select('*', { count: 'exact', head: true })
         
         if (countError) throw countError
         
         const nextNumber = (count || 0) + 1
-        assessmentId = `LR-${nextNumber}`
+        assessmentId = `DRAFT-${nextNumber}`
       }
       
       // Get assessor name from current user
@@ -280,9 +280,9 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
       }
 
       if (isEditMode) {
-        // Update existing assessment
+        // Update existing draft
         const { error: updateError } = await supabase
-          .from('Threat Assessments')
+          .from('Threat Assessments_duplicate')
           .update(assessmentData)
           .eq('LR_Threat_Asses_ID', assessmentId)
 
@@ -299,9 +299,9 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           .delete()
           .eq('assessment_id', assessmentId)
       } else {
-        // Insert new assessment
+        // Insert new draft
         const { error: insertError } = await supabase
-          .from('Threat Assessments')
+          .from('Threat Assessments_duplicate')
           .insert(assessmentData)
 
         if (insertError) throw insertError

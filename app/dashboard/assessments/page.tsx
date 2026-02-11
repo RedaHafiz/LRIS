@@ -36,6 +36,7 @@ export default async function AssessmentsPage() {
       <LandraceAssessmentsView
         initialAssessments={assessments || []}
         userId={user.id}
+        showActions={false}
       />
     </div>
   )

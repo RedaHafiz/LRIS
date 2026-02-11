@@ -68,16 +68,54 @@ export default function AssessmentReviewView({
     setError('')
 
     try {
-      const { error } = await supabase
+      // Generate final LR ID for approved assessment
+      const { count } = await supabase
         .from('Threat Assessments')
-        .update({
-          status: 'approved',
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: userId,
-        })
-        .eq('LR_Threat_Asses_ID', assessmentId)
+        .select('*', { count: 'exact', head: true })
+      
+      const finalId = `LR-${(count || 0) + 1}`
+      
+      // Copy draft to main Threat Assessments table with new ID
+      const approvedData = {
+        ...assessment,
+        LR_Threat_Asses_ID: finalId,
+        status: 'approved',
+        reviewed_at: new Date().toISOString(),
+        reviewed_by: userId,
+      }
+      delete approvedData.id // Remove duplicate table's UUID
+      
+      const { error: insertError } = await supabase
+        .from('Threat Assessments')
+        .insert(approvedData)
 
-      if (error) throw error
+      if (insertError) throw insertError
+      
+      // Delete draft from duplicate table
+      const { error: deleteError } = await supabase
+        .from('Threat Assessments_duplicate')
+        .delete()
+        .eq('LR_Threat_Asses_ID', assessmentId)
+      
+      if (deleteError) throw deleteError
+      
+      // Delete assignments (they're linked to draft ID)
+      await supabase
+        .from('assessment_assignments')
+        .delete()
+        .eq('assessment_id', assessmentId)
+      
+      // Delete taxa links
+      await supabase
+        .from('assessment_taxa')
+        .delete()
+        .eq('assessment_id', assessmentId)
+      
+      // Delete comments
+      await supabase
+        .from('assessment_comments')
+        .delete()
+        .eq('assessment_id', assessmentId)
 
       // Notify assessor and co-assessor
       const assessorIds = assignments
@@ -89,7 +127,7 @@ export default function AssessmentReviewView({
           .from('notifications')
           .insert({
             user_id: assessorId,
-            message: `Your threat assessment "${assessment.LR_Name}" has been approved!`,
+            message: `Your threat assessment "${assessment.LR_Name}" has been approved and published to the database!`,
             type: 'approval',
             read: false,
           })
@@ -114,8 +152,9 @@ export default function AssessmentReviewView({
     setError('')
 
     try {
+      // Update draft status in duplicate table
       const { error } = await supabase
-        .from('Threat Assessments')
+        .from('Threat Assessments_duplicate')
         .update({
           status: 'returned',
         })

@@ -23,11 +23,11 @@ export default async function MyAssessmentsPage() {
   // Get assessment IDs where user has a role
   const assignedAssessmentIds = userAssignments?.map(a => a.assessment_id) || []
 
-  // Fetch only assessments where user has a role (assessor, co-assessor, or reviewer)
+  // Fetch only draft assessments where user has a role (assessor, co-assessor, or reviewer)
   let assessments = []
   if (assignedAssessmentIds.length > 0) {
     const { data } = await supabase
-      .from('Threat Assessments')
+      .from('Threat Assessments_duplicate')
       .select('*')
       .in('LR_Threat_Asses_ID', assignedAssessmentIds)
       .order('Assess_Date', { ascending: false })
