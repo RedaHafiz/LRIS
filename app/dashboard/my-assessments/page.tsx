@@ -23,15 +23,21 @@ export default async function MyAssessmentsPage() {
   // Get assessment IDs where user has a role
   const assignedAssessmentIds = userAssignments?.map(a => a.assessment_id) || []
 
-  // Fetch only draft assessments where user has a role (assessor, co-assessor, or reviewer)
+  // Fetch ALL draft assessments (temporarily for debugging)
+  const { data: allDrafts, error: allError } = await supabase
+    .from('Threat Assessments_duplicate')
+    .select('*')
+  
+  console.log('All drafts:', allDrafts)
+  console.log('Assigned IDs:', assignedAssessmentIds)
+  
+  // Filter on client side
   let assessments = []
-  if (assignedAssessmentIds.length > 0) {
-    const { data } = await supabase
-      .from('Threat Assessments_duplicate')
-      .select('*')
-      .in('LR_Threat_Asses_ID', assignedAssessmentIds)
-      .order('Assess_Date', { ascending: false })
-    assessments = data || []
+  if (allDrafts && assignedAssessmentIds.length > 0) {
+    assessments = allDrafts.filter(a => 
+      assignedAssessmentIds.includes(a.LR_Threat_Asses_ID)
+    )
+    console.log('Filtered assessments:', assessments)
   }
 
   // Enrich assessments with user role and comment counts

@@ -62,7 +62,8 @@ export default function ProfileEditForm({ userId, currentProfile }: ProfileEditF
 
       setSuccess(true)
       setTimeout(() => {
-        router.push(`/dashboard/profile/${userId}`)
+        router.push('/dashboard')
+        router.refresh()
       }, 1500)
     } catch (err: any) {
       setError(err.message || 'Failed to update profile')
@@ -74,8 +75,8 @@ export default function ProfileEditForm({ userId, currentProfile }: ProfileEditF
   return (
     <div>
       <div className="mb-6">
-        <Link href={`/dashboard/profile/${userId}`} className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
-          ← Back to Profile
+        <Link href="/dashboard" className="text-blue-600 hover:text-blue-700 mb-4 inline-block">
+          ← Back to Dashboard
         </Link>
         <h1 className="text-3xl font-bold text-gray-900">Edit Profile</h1>
       </div>
@@ -202,7 +203,7 @@ export default function ProfileEditForm({ userId, currentProfile }: ProfileEditF
               {loading ? 'Saving...' : 'Save Changes'}
             </button>
             <Link
-              href={`/dashboard/profile/${userId}`}
+              href="/dashboard"
               className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center"
             >
               Cancel

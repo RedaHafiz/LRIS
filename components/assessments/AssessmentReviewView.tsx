@@ -33,6 +33,8 @@ export default function AssessmentReviewView({
     setError('')
 
     try {
+      console.log('Adding comment:', { assessmentId, userId, comment: newComment.trim() })
+      
       const { data, error } = await supabase
         .from('assessment_comments')
         .insert({
@@ -51,13 +53,16 @@ export default function AssessmentReviewView({
         `)
         .single()
 
+      console.log('Comment insert result:', { data, error })
+
       if (error) throw error
 
       setComments([...comments, data])
       setNewComment('')
       router.refresh()
     } catch (err: any) {
-      setError(err.message)
+      console.error('Error adding comment:', err)
+      setError(err.message || 'Failed to add comment')
     } finally {
       setIsSubmitting(false)
     }
@@ -240,6 +245,135 @@ export default function AssessmentReviewView({
                assessment.status === 'pending_review' ? 'Pending Review' :
                'Draft'}
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Threat Criteria Scores */}
+      <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Threat Criteria Scores</h2>
+        
+        {/* Criterion A: Reduction of in situ populations */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">Criterion A: Reduction of in situ populations</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A1.1 - Observed reduction</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A1.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A1.2 - Estimated reduction</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A1.2'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A1.3 - Suspected reduction</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A1.3'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A2.1 - Ongoing decline</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A2.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A2.2 - Future decline</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A2.2'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A2.3 - Causes not ceased</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A2.3'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A2.4 - Causes not understood</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A2.4'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A3.1 - Past and continuing</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A3.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">A3.2 - Past and future</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_A3.2'] || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Criterion B: Geographic range */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">Criterion B: Geographic range</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">B1.1 - Extent of occurrence</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_B1.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">B1.2 - Severely fragmented</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_B1.2'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">B1.3 - Continuing decline</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_B1.3'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">B1.4 - Extreme fluctuations</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_B1.4'] || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Criterion C: Small population size */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">Criterion C: Small population size and decline</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">C1.1 - Population decline</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_C1.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">C1.2 - Continuing decline</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_C1.2'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">C1.3 - Population fluctuations</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_C1.3'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">C2.1 - Very small population</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_C2.1'] || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Criterion D: Very small or restricted */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3">Criterion D: Very small or restricted population</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">D1.1 - Very small population</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_D1.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">D1.2 - Restricted area</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_D1.2'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">D1.3 - Few locations</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_D1.3'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">D2.1 - Acute threat</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_D2.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">D2.2 - Time to threat</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_D2.2'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">D3.1 - Extremely restricted</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_D3.1'] || 'N/A'}</p>
+            </div>
+            <div className="border border-gray-200 rounded p-3">
+              <p className="text-sm text-gray-600 mb-1">D3.2 - Critical locations</p>
+              <p className="text-lg font-semibold text-gray-900">{assessment['Subcriteria_Scores_D3.2'] || 'N/A'}</p>
+            </div>
           </div>
         </div>
       </div>

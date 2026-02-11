@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import ThreatAssessmentWizard from '@/components/assessments/ThreatAssessmentWizard'
 
-export default async function EditAssessmentPage({ params }: { params: { id: string } }) {
+export default async function EditAssessmentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
 
   const {
@@ -17,11 +18,30 @@ export default async function EditAssessmentPage({ params }: { params: { id: str
   const { data: assessment, error } = await supabase
     .from('Threat Assessments_duplicate')
     .select('*')
-    .eq('LR_Threat_Asses_ID', params.id)
-    .single()
+    .eq('LR_Threat_Asses_ID', id)
+    .maybeSingle()
 
-  if (error || !assessment) {
-    notFound()
+  if (error) {
+    console.error('Error fetching assessment:', error)
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <p className="font-semibold">Error loading assessment</p>
+          <p className="text-sm mt-1">{error.message}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!assessment) {
+    return (
+      <div className="p-8">
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded">
+          <p className="font-semibold">Draft not found</p>
+          <p className="text-sm mt-1">Could not find draft with ID: {id}</p>
+        </div>
+      </div>
+    )
   }
 
   // Fetch existing crop and landrace names from drafts
@@ -43,7 +63,7 @@ export default async function EditAssessmentPage({ params }: { params: { id: str
   const { data: assignments } = await supabase
     .from('assessment_assignments')
     .select('user_id, role')
-    .eq('assessment_id', params.id)
+    .eq('assessment_id', id)
 
   const reviewer = assignments?.find(a => a.role === 'reviewer')
   const coAssessor = assignments?.find(a => a.role === 'co-assessor')
@@ -52,7 +72,7 @@ export default async function EditAssessmentPage({ params }: { params: { id: str
   const { data: taxaLink } = await supabase
     .from('assessment_taxa')
     .select('taxa_id')
-    .eq('assessment_id', params.id)
+    .eq('assessment_id', id)
     .single()
 
   // Fetch comments for this assessment
@@ -66,14 +86,14 @@ export default async function EditAssessmentPage({ params }: { params: { id: str
         email
       )
     `)
-    .eq('assessment_id', params.id)
+    .eq('assessment_id', id)
     .order('created_at', { ascending: true })
 
   return (
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Edit Threat Assessment</h1>
-        <p className="text-gray-600 mt-1">Assessment ID: {params.id}</p>
+        <p className="text-gray-600 mt-1">Assessment ID: {id}</p>
       </div>
 
       <ThreatAssessmentWizard 

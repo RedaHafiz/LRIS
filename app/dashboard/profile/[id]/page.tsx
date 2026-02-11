@@ -18,9 +18,20 @@ export default async function ProfilePage({ params }: { params: { id: string } }
     .from('profiles')
     .select('*')
     .eq('id', params.id)
-    .single()
+    .maybeSingle()
 
-  if (error || !profile) {
+  if (error) {
+    console.error('Error fetching profile:', error)
+    return (
+      <div className="p-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          Error loading profile: {error.message}
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile) {
     notFound()
   }
 
