@@ -23,6 +23,7 @@ interface ThreatAssessment {
 }
 
 export default function PassportDataSearch() {
+  console.log('PassportDataSearch component loaded - version 2.0')
   const [searchQuery, setSearchQuery] = useState('')
   const [results, setResults] = useState<PassportData[]>([])
   const [allResults, setAllResults] = useState<PassportData[]>([])
@@ -210,7 +211,7 @@ export default function PassportDataSearch() {
     applyFilters()
   }, [selectedCrop, selectedCountry, selectedRisk, allResults, searched])
 
-  const toggleThreatAssessment = async (landraceName: string, itemId: string) => {
+  const toggleThreatAssessment = async (lrThreatAssesId: string, itemId: string) => {
     if (expandedCard === itemId) {
       setExpandedCard(null)
       return
@@ -218,20 +219,42 @@ export default function PassportDataSearch() {
 
     setExpandedCard(itemId)
 
-    // If already fetched, don't fetch again
-    if (threatAssessments[itemId]) {
-      return
-    }
+    // If already fetched, don't fetch again (temporarily disabled for debugging)
+    // if (threatAssessments[itemId]) {
+    //   return
+    // }
 
+    console.log('Fetching threat assessment for ID:', lrThreatAssesId)
     setLoadingThreat(itemId)
     const supabase = createClient()
 
     try {
-      const { data, error } = await supabase
+      // Fetch all and filter client-side to debug
+      const { data: allData, error } = await supabase
         .from('Threat Assessments')
         .select('*')
-        .eq('LR_Name', landraceName)
-        .order('Assess_Date', { ascending: false })
+      
+      console.log('Total records fetched:', allData?.length || 0)
+      console.log('Looking for ID:', JSON.stringify(lrThreatAssesId))
+      console.log('Sample IDs from database:', allData?.slice(0, 5).map(a => JSON.stringify(a.LR_Threat_Asses_ID)))
+      
+      const data = allData?.filter(item => item.LR_Threat_Asses_ID === lrThreatAssesId)
+      console.log('Filtered results count:', data?.length || 0)
+      
+      if (data && data.length > 0) {
+        console.log('Match found:', data[0])
+      } else {
+        console.log('No exact match found. Trying case-insensitive and trimmed comparison...')
+        const dataFuzzy = allData?.filter(item => 
+          item.LR_Threat_Asses_ID?.toString().trim().toLowerCase() === lrThreatAssesId?.toString().trim().toLowerCase()
+        )
+        console.log('Fuzzy match results:', dataFuzzy?.length || 0)
+        if (dataFuzzy && dataFuzzy.length > 0) {
+          console.log('Fuzzy match found:', dataFuzzy[0])
+        }
+      }
+      
+      console.log('Query result:', { data, error })
 
       if (error) {
         console.error('Error fetching threat assessments:', error)
@@ -436,10 +459,10 @@ export default function PassportDataSearch() {
                       </div>
                     )}
 
-                    {item['LR_Threat Asses_ID'] && (
+                    {item.LR_Threat_Asses_ID && (
                       <div>
                         <span className="text-xs font-medium text-gray-500 uppercase">Threat Assessment ID</span>
-                        <p className="text-sm text-gray-900 font-mono">{item['LR_Threat Asses_ID']}</p>
+                        <p className="text-sm text-gray-900 font-mono">{item.LR_Threat_Asses_ID}</p>
                       </div>
                     )}
 
@@ -566,7 +589,15 @@ export default function PassportDataSearch() {
                 {/* Show Threat Assessment Button */}
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <button
-                    onClick={() => toggleThreatAssessment(item.ACCE_NAME, item.id)}
+                    onClick={() => {
+                      try {
+                        console.log('Button clicked for item:', item.ACCE_NAME, 'ID:', item.LR_Threat_Asses_ID)
+                        console.log('About to call toggleThreatAssessment')
+                        toggleThreatAssessment(item.LR_Threat_Asses_ID || '', item.id)
+                      } catch (error) {
+                        console.error('Error in button click:', error)
+                      }
+                    }}
                     className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium text-sm"
                     type="button"
                   >

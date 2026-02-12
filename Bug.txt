@@ -1,0 +1,6 @@
+Looking for ID: "LRTA 037"
+PassportDataSearch.tsx:239 Sample IDs from database: (5) ['"LRTA 001"', '"LTRA 008"', '"LTRA 022"', '"LTRA 024"', '"LTRA 019"']
+PassportDataSearch.tsx:242 Filtered results count: 0
+PassportDataSearch.tsx:247 No exact match found. Trying case-insensitive and trimmed comparison...
+PassportDataSearch.tsx:251 Fuzzy match results: 0
+PassportDataSearch.tsx:257 Query result: {data: Array(0), error: null}
