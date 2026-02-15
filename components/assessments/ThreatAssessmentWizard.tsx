@@ -817,75 +817,81 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
               {/* Criterion A: LR Population Range */}
               <div className="border-l-4 border-red-500 pl-4 bg-red-50 p-4 rounded-r">
                 <h3 className="font-semibold text-lg text-gray-900 mb-4">Criterion A: LR Population Range</h3>
-                <div className="grid grid-cols-2 gap-4">
+                
+                {/* A1 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">A1: LR cultivation estimate</h4>
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A1: LR cultivation estimate</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A1.1: Geographic range</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A1.1']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A1.1: Geographic range</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A1.2: Geographic concentration</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A1.2']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.2': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A1.2: Geographic concentration</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A1.3: LR maintainer number</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A1.3']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.3': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
+                </div>
+
+                {/* A2 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">A2: LR cultivation change</h4>
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A1.3: LR maintainer number</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.1: Geographic range reduction</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.1']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.1: Geographic range reduction</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.2: Geographic concentration reduction</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.2']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.2': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.2: Geographic concentration reduction</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.3: Geographic constancy</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.3']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.3': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.3: Geographic constancy</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.4: Maintainer number reduction</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.4']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.4': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
+                </div>
+
+                {/* A3 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">A3: Genetic integrity</h4>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A2.4: Maintainer number reduction</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A3.1: LR phenotypic diversity</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A3.1']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A3.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A3.1: LR phenotypic diversity</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">A3.2: LR exchange</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A3.2']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A3.2': e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">A3.2: LR exchange</label>
-                    <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_B1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -894,40 +900,36 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
               {/* Criterion B: LR Population Trend */}
               <div className="border-l-4 border-blue-500 pl-4 bg-blue-50 p-4 rounded-r">
                 <h3 className="font-semibold text-lg text-gray-900 mb-4">Criterion B: LR Population Trend</h3>
+                
+                {/* B1 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">B1: Production sustainability</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">B1: Production sustainability</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.1: Ease of multiplication</label>
+                    <input type="text" placeholder="1-5 or NA"
+                      value={formData['Subcriteria_Scores_B1.1']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.1': e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.2: Maintainer continuation</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_B1.2']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.2': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.1: Ease of multiplication</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.3: LR known loss</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_B1.3']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.3': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.2: Maintainer continuation</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.4: Cultivation of modern cultivars</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_B1.4']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.4': e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.3: LR known loss</label>
-                    <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_C1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.1': e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">B1.4: Cultivation of modern cultivars</label>
-                    <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_C1.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.2': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -936,40 +938,41 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
               {/* Criterion C: Market Farmer Characteristics */}
               <div className="border-l-4 border-green-500 pl-4 bg-green-50 p-4 rounded-r">
                 <h3 className="font-semibold text-lg text-gray-900 mb-4">Criterion C: Market Farmer Characteristics</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">C1: Market prospects</label>
-                    <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_C1.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.3': e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  </div>
+                
+                {/* C1 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">C1: Market prospects</h4>
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">C1.1: LR support applied</label>
                     <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_C2.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C2.1': e.target.value })}
+                      value={formData['Subcriteria_Scores_C1.1']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">C1.2: Market range</label>
                     <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_D1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.1': e.target.value })}
+                      value={formData['Subcriteria_Scores_C1.2']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.2': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">C1.3: Food system embeddedness</label>
                     <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_D1.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.2': e.target.value })}
+                      value={formData['Subcriteria_Scores_C1.3']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.3': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
+                </div>
+
+                {/* C2 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">C2: Farmer characteristics</h4>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">C2.1: Maintainer Age</label>
                     <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_D1.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.3': e.target.value })}
+                      value={formData['Subcriteria_Scores_C2.1']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C2.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -978,54 +981,67 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
               {/* Criterion D: LR Context */}
               <div className="border-l-4 border-yellow-500 pl-4 bg-yellow-50 p-4 rounded-r">
                 <h3 className="font-semibold text-lg text-gray-900 mb-4">Criterion D: LR Context</h3>
-                <div className="grid grid-cols-2 gap-4">
+                
+                {/* D1 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">D1: Conservation</h4>
+                <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">D1.1: Conserved in situ</label>
+                    <input type="text" placeholder="1-5 or NA"
+                      value={formData['Subcriteria_Scores_D1.1']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.1': e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">D1.2: Conserved in situ backup</label>
+                    <input type="text" placeholder="1-5 or NA"
+                      value={formData['Subcriteria_Scores_D1.2']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.2': e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">D1.3: Conserved ex-situ</label>
+                    <input type="text" placeholder="1-5 or NA"
+                      value={formData['Subcriteria_Scores_D1.3']}
+                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.3': e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
+                  </div>
+                </div>
+
+                {/* D2 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">D2: Cultivation system</h4>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">D2.1: Type of cultivation system</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D2.1']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D2.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">D1.2: Conserved in situ backup</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">D2.2: Herbicide and fertilizer usage</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D2.2']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D2.2': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
+                </div>
+
+                {/* D3 Subheading */}
+                <h4 className="font-medium text-base text-gray-800 mt-4 mb-3">D3: External threats</h4>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">D1.3: Conserved ex-situ</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">D3.1: Distorting incentives</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D3.1']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D3.1': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">D2.1: Type of cultivation system</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">D3.2: Global stochastic impact</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D3.2']}
                       onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D3.2': e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">D2.2: Herbicide and fertilizer usage</label>
-                    <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_A1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.1': e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">D3.1: Distorting incentives</label>
-                    <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_A1.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.2': e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">D3.2: Global stochastic impact</label>
-                    <input type="text" placeholder="1-5 or NA"
-                      value={formData['Subcriteria_Scores_A1.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.3': e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
