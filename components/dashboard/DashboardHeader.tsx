@@ -29,6 +29,27 @@ export default function DashboardHeader({ user, profile }: DashboardHeaderProps)
     router.refresh()
   }
 
+  const markAsRead = async (notificationId: string) => {
+    await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId)
+    
+    setNotifications(notifications.map(n => 
+      n.id === notificationId ? { ...n, read: true } : n
+    ))
+  }
+
+  const markAllAsRead = async () => {
+    await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', user.id)
+      .eq('read', false)
+    
+    setNotifications(notifications.map(n => ({ ...n, read: true })))
+  }
+
   // Load notifications
   useEffect(() => {
     const loadNotifications = async () => {
@@ -75,13 +96,6 @@ export default function DashboardHeader({ user, profile }: DashboardHeaderProps)
       .or(`LR_Name.ilike.%${query}%,Crop.ilike.%${query}%`)
       .limit(5)
 
-    // Search working sets
-    const { data: projects } = await supabase
-      .from('projects')
-      .select('id, name, description')
-      .ilike('name', `%${query}%`)
-      .limit(5)
-
     const results = [
       ...(assessments || []).map(a => ({
         type: 'assessment',
@@ -89,12 +103,6 @@ export default function DashboardHeader({ user, profile }: DashboardHeaderProps)
         title: a.LR_Name,
         subtitle: a.Crop,
         badge: a.Threat_Category,
-      })),
-      ...(projects || []).map(p => ({
-        type: 'project',
-        id: p.id,
-        title: p.name,
-        subtitle: p.description,
       })),
     ]
 
@@ -112,7 +120,7 @@ export default function DashboardHeader({ user, profile }: DashboardHeaderProps)
       <div className="flex items-center flex-1 relative" ref={searchRef}>
         <input
           type="text"
-          placeholder="Search projects, assessments..."
+          placeholder="Search assessments..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
@@ -136,7 +144,7 @@ export default function DashboardHeader({ user, profile }: DashboardHeaderProps)
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                        {result.type === 'assessment' ? 'Assessment' : 'Working Set'}
+                        Assessment
                       </span>
                       {result.badge && (
                         <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
@@ -183,33 +191,54 @@ export default function DashboardHeader({ user, profile }: DashboardHeaderProps)
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
               <div className="p-3 border-b border-gray-200 flex items-center justify-between">
                 <h3 className="font-semibold text-gray-900">Notifications</h3>
-                <Link 
-                  href="/dashboard/notifications"
-                  onClick={() => setShowNotifications(false)}
-                  className="text-xs text-blue-600 hover:text-blue-800"
-                >
-                  View all
-                </Link>
+                <div className="flex items-center gap-2">
+                  {notifications.some(n => !n.read) && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                  <Link 
+                    href="/dashboard/notifications"
+                    onClick={() => setShowNotifications(false)}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    View all
+                  </Link>
+                </div>
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`p-3 border-b last:border-b-0 hover:bg-gray-50 ${
+                      className={`p-3 border-b last:border-b-0 hover:bg-gray-50 group ${
                         !notification.read ? 'bg-blue-50' : ''
                       }`}
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <p className="text-sm text-gray-900">{notification.message}</p>
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(notification.created_at).toLocaleDateString()}
                           </p>
                         </div>
-                        {!notification.read && (
-                          <span className="ml-2 w-2 h-2 bg-blue-600 rounded-full mt-1"></span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {!notification.read && (
+                            <button
+                              onClick={() => markAsRead(notification.id)}
+                              className="text-xs text-blue-600 hover:text-blue-800 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Mark as read"
+                            >
+                              ✓
+                            </button>
+                          )}
+                          {!notification.read && (
+                            <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))

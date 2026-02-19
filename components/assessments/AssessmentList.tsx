@@ -73,9 +73,11 @@ export default function AssessmentList({ initialAssessments }: AssessmentListPro
                   <p className="text-xs text-gray-500">
                     ID: {assessment.LR_Threat_Asses_ID}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(assessment.created_at).toLocaleDateString()}
-                  </p>
+                  {assessment.Assess_Date && (
+                    <p className="text-xs text-gray-500">
+                      Date: {new Date(assessment.Assess_Date).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center space-x-3">

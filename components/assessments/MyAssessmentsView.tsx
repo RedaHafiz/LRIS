@@ -7,22 +7,15 @@ import Link from 'next/link'
 
 interface MyAssessmentsViewProps {
   initialAssessments: any[]
-  workingSets: any[]
   userId: string
 }
 
 export default function MyAssessmentsView({
   initialAssessments,
-  workingSets: initialWorkingSets,
   userId,
 }: MyAssessmentsViewProps) {
-  const [activeTab, setActiveTab] = useState<'assessments' | 'working-sets'>('assessments')
   const [assessments, setAssessments] = useState(initialAssessments)
-  const [workingSets, setWorkingSets] = useState(initialWorkingSets)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [newWorkingSetName, setNewWorkingSetName] = useState('')
-  const [newWorkingSetDescription, setNewWorkingSetDescription] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -62,63 +55,9 @@ export default function MyAssessmentsView({
     }
   }
 
-  const handleCreateWorkingSet = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .insert({
-          name: newWorkingSetName,
-          description: newWorkingSetDescription,
-          owner_id: userId,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setWorkingSets([data, ...workingSets])
-      setShowCreateModal(false)
-      setNewWorkingSetName('')
-      setNewWorkingSetDescription('')
-      router.refresh()
-    } catch (error: any) {
-      console.error('Error creating working set:', error)
-      alert(`Failed to create working set: ${error.message}`)
-    }
-  }
-
   return (
     <div>
-      {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('assessments')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'assessments'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            My Assessments ({assessments.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('working-sets')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'working-sets'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            Working Sets ({workingSets.length})
-          </button>
-        </nav>
-      </div>
-
-      {/* Assessments Tab */}
-      {activeTab === 'assessments' && (
+      {/* Assessments */}
         <div>
           <div className="mb-4 flex justify-between items-center">
             <p className="text-gray-600">Assessments you've created or are assigned to</p>
@@ -217,95 +156,6 @@ export default function MyAssessmentsView({
             </table>
           </div>
         </div>
-      )}
-
-      {/* Working Sets Tab */}
-      {activeTab === 'working-sets' && (
-        <div>
-          <div className="mb-4 flex justify-between items-center">
-            <p className="text-gray-600">Organize assessments into working sets</p>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-            >
-              + Create Working Set
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {workingSets.length === 0 ? (
-              <div className="col-span-full bg-white rounded-lg shadow border border-gray-200 p-8 text-center text-gray-500">
-                No working sets yet. Create one to organize your assessments.
-              </div>
-            ) : (
-              workingSets.map((workingSet) => (
-                <Link
-                  key={workingSet.id}
-                  href={`/dashboard/projects/${workingSet.id}`}
-                  className="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-md transition-shadow"
-                >
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{workingSet.name}</h3>
-                  <p className="text-sm text-gray-600 line-clamp-2">{workingSet.description || 'No description'}</p>
-                  <p className="text-xs text-gray-400 mt-4">
-                    Created {new Date(workingSet.created_at).toLocaleDateString()}
-                  </p>
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Create Working Set Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Create Working Set</h3>
-            <form onSubmit={handleCreateWorkingSet} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input
-                  type="text"
-                  value={newWorkingSetName}
-                  onChange={(e) => setNewWorkingSetName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
-                  placeholder="e.g., Mediterranean Wheat Study"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={newWorkingSetDescription}
-                  onChange={(e) => setNewWorkingSetDescription(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"
-                  rows={3}
-                  placeholder="Describe the purpose of this working set..."
-                />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
-                >
-                  Create
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateModal(false)
-                    setNewWorkingSetName('')
-                    setNewWorkingSetDescription('')
-                  }}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

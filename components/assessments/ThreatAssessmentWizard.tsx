@@ -186,6 +186,25 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
     )
   }, [allUsers, coAssessorSearchQuery, userId])
 
+  // Validate subcriteria input - only allow 1-5 or NA
+  const handleSubcriteriaChange = (field: string, value: string) => {
+    const upperValue = value.trim().toUpperCase()
+    
+    // Allow empty (user is typing)
+    if (value === '') {
+      setFormData({ ...formData, [field]: value })
+      return
+    }
+    
+    // Check if valid: 1, 2, 3, 4, 5, N, NA
+    if (/^[1-5]$/.test(value) || upperValue === 'N' || upperValue === 'NA') {
+      setFormData({ ...formData, [field]: upperValue === 'N' ? 'NA' : upperValue })
+    } else {
+      // Invalid input - show error message
+      alert('Only values 1, 2, 3, 4, 5, or NA are allowed')
+    }
+  }
+
   // Calculate threat scores with NA handling
   // Base max score is 120 (24 criteria × 5 points each)
   // For each NA value, deduct 5 from the max score
@@ -443,7 +462,13 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
   }
 
   const nextStep = () => {
-    if (currentStep < 6) setCurrentStep(currentStep + 1)
+    // Step 2 validation: reviewer must be selected
+    if (currentStep === 2 && !selectedReviewer) {
+      alert('You must select a reviewer before proceeding to the next step.')
+      setReviewerError(true)
+      return
+    }
+    if (currentStep < 5) setCurrentStep(currentStep + 1)
   }
 
   const prevStep = () => {
@@ -452,9 +477,9 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
 
   const renderStepIndicator = () => (
     <div className="mb-8">
-      <div className="flex items-center justify-between">
-        {[1, 2, 3, 4, 5, 6].map((step) => (
-          <div key={step} className="flex items-center flex-1">
+      <div className="flex items-center justify-between relative">
+        {[1, 2, 3, 4, 5].map((step, index) => (
+          <div key={step} className="flex flex-col items-center" style={{ zIndex: 1 }}>
             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
               step === currentStep 
                 ? 'bg-blue-600 text-white' 
@@ -464,21 +489,28 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
             }`}>
               {step < currentStep ? '✓' : step}
             </div>
-            {step < 6 && (
-              <div className={`flex-1 h-1 mx-2 ${
-                step < currentStep ? 'bg-green-500' : 'bg-gray-200'
-              }`} />
-            )}
+            <span className="text-xs text-gray-600 mt-2 text-center max-w-[80px]">
+              {[
+                'Assessment Unit',
+                'Members & Date',
+                'Criteria Scoring',
+                'Review Category',
+                'Submit'
+              ][index]}
+            </span>
           </div>
         ))}
-      </div>
-      <div className="flex justify-between mt-2 text-xs text-gray-600">
-        <span>Assessment Unit</span>
-        <span>Add Members</span>
-        <span>Data Collection</span>
-        <span>Criteria Scoring</span>
-        <span>Review Category</span>
-        <span>Submit</span>
+        {/* Connecting lines */}
+        <div className="absolute left-0 right-0 flex items-center" style={{ top: '20px', paddingLeft: '40px', paddingRight: '40px', zIndex: 0 }}>
+          {[1, 2, 3, 4].map((step) => (
+            <div
+              key={step}
+              className={`h-1 flex-1 ${
+                step < currentStep ? 'bg-green-500' : 'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -629,11 +661,11 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 2: Add Members */}
+        {/* Step 2: Add Members & Assessment Date */}
         {currentStep === 2 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 2: Add Members</h2>
-            <p className="text-gray-600">Select a reviewer (required) and optionally add a co-assessor.</p>
+            <h2 className="text-2xl font-bold text-gray-900">Step 2: Add Members & Assessment Date</h2>
+            <p className="text-gray-600">Select a reviewer (required), optionally add a co-assessor, and enter the assessment date.</p>
 
             {/* Reviewer Selection */}
             <div>
@@ -763,15 +795,8 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                 )}
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Step 3: Data Collection */}
-        {currentStep === 3 && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 3: Representative Data Collection</h2>
-            <p className="text-gray-600">Enter population descriptive and management data for this landrace.</p>
-
+            {/* Assessment Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Assessment Date *
@@ -793,10 +818,10 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 4: Criteria Scoring */}
-        {currentStep === 4 && (
+        {/* Step 3: Criteria Scoring */}
+        {currentStep === 3 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 4: Match Data Against Threat Criteria</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Step 3: Match Data Against Threat Criteria</h2>
             <p className="text-gray-600">Score each criterion based on your collected data (1-5 scale).</p>
             
             <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 p-4 rounded">
@@ -825,21 +850,21 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">A1.1: Geographic range</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A1.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">A1.2: Geographic concentration</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A1.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A1.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">A1.3: LR maintainer number</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A1.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A1.3': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A1.3', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -851,28 +876,28 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">A2.1: Geographic range reduction</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A2.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">A2.2: Geographic concentration reduction</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A2.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">A2.3: Geographic constancy</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.3': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A2.3', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">A2.4: Maintainer number reduction</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A2.4']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A2.4': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A2.4', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -884,14 +909,14 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">A3.1: LR phenotypic diversity</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A3.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A3.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A3.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">A3.2: LR exchange</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_A3.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_A3.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_A3.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -908,28 +933,28 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">B1.1: Ease of multiplication</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_B1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_B1.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">B1.2: Maintainer continuation</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_B1.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_B1.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">B1.3: LR known loss</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_B1.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.3': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_B1.3', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">B1.4: Cultivation of modern cultivars</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_B1.4']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_B1.4': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_B1.4', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -946,21 +971,21 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">C1.1: LR support applied</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_C1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_C1.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">C1.2: Market range</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_C1.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_C1.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">C1.3: Food system embeddedness</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_C1.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C1.3': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_C1.3', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -972,7 +997,7 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">C2.1: Maintainer Age</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_C2.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_C2.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_C2.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -989,21 +1014,21 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">D1.1: Conserved in situ</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D1.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_D1.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">D1.2: Conserved in situ backup</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D1.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_D1.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">D1.3: Conserved ex-situ</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D1.3']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D1.3': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_D1.3', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -1015,14 +1040,14 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">D2.1: Type of cultivation system</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D2.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D2.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_D2.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">D2.2: Herbicide and fertilizer usage</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D2.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D2.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_D2.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -1034,14 +1059,14 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
                     <label className="block text-sm font-medium text-gray-700 mb-1">D3.1: Distorting incentives</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D3.1']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D3.1': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_D3.1', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">D3.2: Global stochastic impact</label>
                     <input type="text" placeholder="1-5 or NA"
                       value={formData['Subcriteria_Scores_D3.2']}
-                      onChange={(e) => setFormData({ ...formData, 'Subcriteria_Scores_D3.2': e.target.value })}
+                      onChange={(e) => handleSubcriteriaChange('Subcriteria_Scores_D3.2', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900" />
                   </div>
                 </div>
@@ -1050,10 +1075,10 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 5: Review */}
-        {currentStep === 5 && (
+        {/* Step 4: Review */}
+        {currentStep === 4 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 5: Review Threat Category</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Step 4: Review Threat Category</h2>
             <p className="text-gray-600">Review the automatically calculated threat assessment results.</p>
 
             {(() => {
@@ -1088,10 +1113,10 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
           </div>
         )}
 
-        {/* Step 6: Submit */}
-        {currentStep === 6 && (
+        {/* Step 5: Submit */}
+        {currentStep === 5 && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Step 6: Submit for Expert Verification</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Step 5: Submit for Expert Verification</h2>
             <p className="text-gray-600">Your assessment is ready to be submitted. Choose whether to save as draft or submit for review.</p>
 
             {/* Display comments if assessment was returned */}
@@ -1154,14 +1179,13 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
             Previous
           </button>
 
-          {currentStep < 6 ? (
+          {currentStep < 5 ? (
             <button
               type="button"
               onClick={nextStep}
               disabled={
                 (currentStep === 1 && (!formData.lr_name || !formData.crop)) ||
-                (currentStep === 2 && !selectedReviewer) ||
-                (currentStep === 3 && !formData.assess_date)
+                (currentStep === 2 && (!selectedReviewer || !formData.assess_date))
               }
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -1182,3 +1206,4 @@ export default function ThreatAssessmentWizard({ existingCrops, existingLandrace
     </div>
   )
 }
+

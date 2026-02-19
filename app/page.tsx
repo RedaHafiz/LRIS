@@ -18,10 +18,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-12">
-          Landrace Threat Assessment Platform
-        </h1>
+        {/* Title removed - using logo only */}
 
         {/* Action Buttons */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">

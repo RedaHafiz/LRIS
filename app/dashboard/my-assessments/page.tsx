@@ -57,25 +57,17 @@ export default async function MyAssessmentsPage() {
     }
   }))
 
-  // Fetch user's working sets
-  const { data: workingSets } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('owner_id', user.id)
-    .order('created_at', { ascending: false })
-
   return (
     <div className="p-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">My Assessments</h1>
         <p className="text-gray-600 mt-1">
-          Manage your threat assessments and working sets
+          Manage your threat assessments
         </p>
       </div>
 
       <MyAssessmentsView
         initialAssessments={enrichedAssessments}
-        workingSets={workingSets || []}
         userId={user.id}
       />
     </div>

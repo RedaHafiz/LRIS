@@ -9,22 +9,30 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
 
   // Fetch user's assignments to get their drafts
-  const { data: userAssignments } = await supabase
+  const { data: userAssignments, error: assignmentsError } = await supabase
     .from('assessment_assignments')
     .select('assessment_id, role')
     .eq('user_id', user?.id)
 
+  console.log('Dashboard - User Assignments:', userAssignments)
+  console.log('Dashboard - Assignments Error:', assignmentsError)
+
   const assignedAssessmentIds = userAssignments?.map(a => a.assessment_id) || []
+  console.log('Dashboard - Assigned IDs:', assignedAssessmentIds)
 
   // Fetch user's draft assessments
   let assessments = []
   if (assignedAssessmentIds.length > 0) {
-    const { data } = await supabase
+    const { data, error: assessmentsError } = await supabase
       .from('Threat Assessments_duplicate')
       .select('*')
       .in('LR_Threat_Asses_ID', assignedAssessmentIds)
-      .order('created_at', { ascending: false })
+    
+    console.log('Dashboard - Assessments Data:', data)
+    console.log('Dashboard - Assessments Error:', assessmentsError)
     assessments = data || []
+  } else {
+    console.log('Dashboard - No assigned assessment IDs found')
   }
   
   // Fetch approved assessments count
