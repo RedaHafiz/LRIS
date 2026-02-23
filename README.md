@@ -41,8 +41,8 @@ npm install
 Create `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
 ```
 
 ### 4. Run Development Server
@@ -53,22 +53,7 @@ npm run dev
 
 ## Database Setup
 
-### Running Migrations
-
-1. Go to Supabase Dashboard → **SQL Editor**
-2. Create new query
-3. Paste contents of `supabase/migrations/001_initial_schema.sql`
-4. Click "Run"
-5. Repeat for `002_row_level_security.sql`
-
 ### Authentication Configuration
-
-1. In Supabase: **Authentication** → **Settings**
-2. Enable **Email** provider
-3. Set **Site URL**: `http://localhost:3000`
-4. Add **Redirect URLs**:
-   - `http://localhost:3000/dashboard`
-   - `https://your-domain.com/dashboard` (for production)
 
 ## Project Structure
 
@@ -95,27 +80,13 @@ threat-assessment-platform/
 
 ### Creating Projects
 
-1. Click "Create Project"
-2. Fill in project details
-3. Add team members with roles:
-   - **Working set admin**: Full permissions
-   - **Edit assessments**: Create/edit assessments
-   - **Comment only**: Read-only access
-
 ### Managing Assessments
-
-- Filter by status, assignee, or type
-- Assign users with dropdown
-- Track progress with visual indicators
-- Move through workflow stages
 
 ### Assessment Workflow
 
-1. Not Started → 2. In Progress → 3. To Review → 4. To Submit → 5. Returned with Comments → 6. Submitted → 7. To Publish → 8. Published
+5 Steps Threat Assessment
 
-## Deployment
-
-### Vercel 
+## Deployment via Vercel
 
 1. Push to GitHub
 2. Import to Vercel
@@ -147,10 +118,6 @@ threat-assessment-platform/
 - Supabase (PostgreSQL + Auth)
 - Row Level Security
 
-## License
-
-MIT License
-
 ---
 
-Built using Next.js and Supabase
+Built using Supabase, TypeScript and Next.js
